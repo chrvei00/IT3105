@@ -29,7 +29,7 @@ class ConSys:
         #Apply control action to plant
         self.plant.input(control_action)
         #Calculate error
-        return self.target_level - self.plant.output()        
+        return self.target_level - self.plant.output()
 
     def run_epoch(self, params):
         error_history = [0, 0]
@@ -69,7 +69,7 @@ def run_simulation():
                 ),
         inquirer.List('plant',
                     message="Which Plant do you wish to use?",
-                    choices=['Bathtub'],
+                    choices=['Bathtub', 'Cournot', 'Population'],
                 ),
     ]
     aSimulation = inquirer.prompt(qSimulation)
