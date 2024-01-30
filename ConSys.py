@@ -42,14 +42,13 @@ class ConSys:
     def run_system(self):
         #Run epochs
         for _ in range(int(self.epochs)):
-            print(f"Epoch {_ + 1}\n")
-            #Run epoch and append mse to history
-            self.run_epoch(self.param_history[-1])
+            print(f"Epoch {_ + 1}")
             #Update controller params (kp, ki, kd) using gradient descent
             mse, grads = self.grad_fn(self.param_history[-1])
             self.mse_history.append(np.abs(mse))
             self.param_history.append(self.controller.update_params(self.param_history[-1], grads, self.learning_rate, self.direction))
-            print(f"\nParams: {self.param_history[-1]}\n")
+            print(f"Params: {self.param_history[-1]}")
+            print(f"MSE: {mse}\n")
             #Reset plant
             self.plant = configPlant(self.plant_name)[1]
             
