@@ -1,6 +1,4 @@
-import jax
-
-class StandardPIDController:
+class StandardPIDController():
     def update_params(self, params, grads, learning_rate, direction):
         g_kp = float(grads[0])
         g_ki = float(grads[1])

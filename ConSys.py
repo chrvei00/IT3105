@@ -64,7 +64,7 @@ def run_simulation():
     qSimulation = [
         inquirer.List('controller',
                     message="Which Controller do you wish to use?",
-                    choices=['StandardPIDController'],
+                    choices=['StandardPIDController', 'NeuralNetPIDController'],
                 ),
         inquirer.List('plant',
                     message="Which Plant do you wish to use?",
