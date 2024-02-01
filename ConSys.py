@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import inquirer
-from Assets.plots import plot_pid_mse
+from datetime import datetime as time
+from Assets.plots import plot_pid_mse, plot_mse
 from config import configGlobal, configPlant, configController, update_config
 
 class ConSys:
@@ -42,19 +43,22 @@ class ConSys:
     def run_system(self):
         #Run epochs
         for _ in range(int(self.epochs)):
-            print(f"Epoch {_ + 1}\n")
-            #Run epoch and append mse to history
-            self.run_epoch(self.param_history[-1])
+            print(f"\n\nEpoch {_ + 1}\n")
             #Update controller params (kp, ki, kd) using gradient descent
             mse, grads = self.grad_fn(self.param_history[-1])
             self.mse_history.append(np.abs(mse))
             self.param_history.append(self.controller.update_params(self.param_history[-1], grads, self.learning_rate, self.direction))
-            print(f"\nParams: {self.param_history[-1]}\n")
+            self.controller.print_params(self.param_history[-1])
+            print(f"MSE: {mse}\n")
             #Reset plant
             self.plant = configPlant(self.plant_name)[1]
             
         #Plot mse history
-        plot_pid_mse(self.mse_history, self.param_history)
+        filename = f"{self.controller.__class__.__name__}_{self.plant_name}_{self.epochs}_{self.timesteps}_{self.learning_rate}_{time.now()}"
+        if self.controller.__class__.__name__ == "NeuralNetPIDController":
+            plot_mse(self.mse_history, filename)
+        elif self.controller.__class__.__name__ == "StandardPIDController":
+            plot_pid_mse(self.mse_history, self.param_history, filename)
 
     def calculate_mse(self, error_history):
         return jnp.mean(jnp.square(error_history))
@@ -65,7 +69,7 @@ def run_simulation():
     qSimulation = [
         inquirer.List('controller',
                     message="Which Controller do you wish to use?",
-                    choices=['StandardPIDController'],
+                    choices=['StandardPIDController', 'NeuralNetPIDController'],
                 ),
         inquirer.List('plant',
                     message="Which Plant do you wish to use?",
