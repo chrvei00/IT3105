@@ -30,6 +30,8 @@ class ConSys:
         #Apply control action to plant
         self.plant.input(control_action)
         #Calculate error
+        # print(f"C: {control_action.primal}")
+        # print(f"E: {self.target_level - self.plant.output().primal}")
         return self.target_level - self.plant.output()
 
     def run_epoch(self, params):
