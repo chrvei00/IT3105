@@ -16,3 +16,7 @@ class StandardPIDController():
     def control_action(self, params, error, integral_error, derivate_error):
         kp, ki, kd = params
         return kp * error + ki * integral_error + kd * derivate_error
+
+    def print_params(self, params):
+        kp, ki, kd = params
+        print(f"Kp: {kp}, Ki: {ki}, Kd: {kd}")

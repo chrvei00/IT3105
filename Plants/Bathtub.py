@@ -11,6 +11,7 @@ class Bathtub(Plant):
     def dynamics(self, control_signal):
         # Simulate the noise in draining
         noise = rnd.uniform(-self.noise_level, self.noise_level)
+        control_signal = max(min(control_signal, 50), 0)
         # Calculate the new water level
         if control_signal < 0:
             control_signal = 0

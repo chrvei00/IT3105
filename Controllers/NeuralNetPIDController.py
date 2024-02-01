@@ -3,23 +3,22 @@ import jax.numpy as jnp
 import numpy as np
 class NeuralNetPIDController():
 
-    def __init__(self):
-        self.batched_predict = jax.vmap(self.predict, in_axes=(None, 0))
+    def __init__(self, activation_function):
+        self.activation_function = activation_function
 
-    def gen_jaxnet_params(self, layers):
+    def gen_jaxnet_params(self, layers, factor):
         sender = layers[0]; params = []
         for receiver in layers[1:]:
-            weights = np.random.uniform(-.1, .1, (sender, receiver))
-            biases = np.random.uniform(-.1, .1, (1, receiver))
+            weights = np.random.uniform(-factor, factor, (sender, receiver))
+            biases = np.random.uniform(-factor, factor, (1, receiver))
             sender = receiver
             params.append([weights, biases])
         return params
 
     def predict(self, params, features):
-        def sigmoid(x):
-            return 1 / (1 + jnp.exp(-x))
         for weights, biases in params:
-            activations = sigmoid(jnp.dot(features, weights) + biases)
+            activations = self.activation_function(jnp.dot(features, weights) + biases)
+            features = activations
         return activations
     
     def update_params(self, params, grads, learning_rate, direction):
@@ -32,3 +31,10 @@ class NeuralNetPIDController():
     
     def control_action(self, params, error, integral_error, derivate_error):
         return self.predict(params, jnp.array([[error, integral_error, derivate_error]]))[0][0]
+
+    def print_params(self, params):
+        for i, (w, b) in enumerate(params):
+            print(f"Layer {i + 1}:")
+            print(f"Weights:\n{w}")
+            print(f"Biases:\n{b}")
+            print()

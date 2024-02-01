@@ -1,4 +1,5 @@
 import inquirer
+import jax.numpy as jnp
 from configparser import ConfigParser
 from Plants.Bathtub import Bathtub
 from Plants.Cournot import Cournot
@@ -35,11 +36,19 @@ def configController(controller):
         params = (config.getfloat('StandardPIDController', 'Kp'), config.getfloat('StandardPIDController', 'Ki'), config.getfloat('StandardPIDController', 'Kd'))
         return params, config.getint('StandardPIDController', 'direction'), StandardPIDController()
     elif controller == "NeuralNetPIDController":
-        controller = NeuralNetPIDController()
+        def sigmoid(x):
+            return 1 / (1 + jnp.exp(-x))
+        def relu(x):
+            return jnp.maximum(x, 0)
+        def tanh(x):
+            return jnp.tanh(x)
+        activation_function_options = [sigmoid, relu, tanh]
+        controller = NeuralNetPIDController(activation_function_options[config.getint('NeuralNetPIDController', 'activation_function')])
         layer_options = [
-           [3, 5, 1], [3, 5, 5, 1], [3, 5, 5, 5, 1], [3, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 5, 5, 1]] 
-        params = controller.gen_jaxnet_params(layer_options[config.getint('NeuralNetPIDController', 'layers')])
-        return params, config.getint('NeuralNetPIDController', 'direction'), NeuralNetPIDController()
+           [3, 5, 1], [3, 5, 5, 1], [3, 5, 5, 5, 1], [3, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 5, 1], [3, 5, 5, 5, 5, 5, 5, 5, 1]]
+        params = controller.gen_jaxnet_params(layer_options[config.getint('NeuralNetPIDController', 'layers')], config.getfloat('NeuralNetPIDController', 'factor'))
+        
+        return params, config.getint('NeuralNetPIDController', 'direction'), controller
 
 def updateGlobal():
     print("Updating global...")
@@ -121,7 +130,9 @@ def updateNeuralNetPIDController():
     if not config.has_section('NeuralNetPIDController'):
         config.add_section('NeuralNetPIDController')
     config.set('NeuralNetPIDController', 'layers', input("Layers: (int) "))
+    config.set('NeuralNetPIDController', 'factor', input("Init factor: (float) "))
     config.set('NeuralNetPIDController', 'direction', input("Direction: (int) "))
+    config.set('NeuralNetPIDController', 'activation_function', input("Activation function: (int: 0, 1, 2) sig, rel, tanh "))
     with open('config.ini', 'w') as f:
         config.write(f)
 

@@ -14,7 +14,7 @@ class Population(Plant):
         # Maximum hunters are 100, and minimum are 0
         control_signal = max(min(control_signal, 100), 0)
         # Calculate the new stock
-        self.stock = max((self.stock-(self.stock*self.growth_factor - control_signal*self.stock*self.hunter_rate + noise)), 0)
+        self.stock = max((self.stock+self.stock*self.growth_factor-control_signal*self.stock*self.hunter_rate + noise), 0)
 
     def output(self):
         return self.stock
