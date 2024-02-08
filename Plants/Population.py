@@ -11,10 +11,14 @@ class Population(Plant):
     def dynamics(self, control_signal):
         # Simulate the noise
         noise = rnd.uniform(-self.noise_level, self.noise_level)
+        if control_signal < 1 and control_signal > 0:
+            control_signal = control_signal*100
+        else:
+            control_signal = -control_signal
         # Maximum hunters are 100, and minimum are 0
         control_signal = max(min(control_signal, 100), 0)
         # Calculate the new stock
-        self.stock = max((self.stock+self.stock*self.growth_factor-control_signal*self.stock*self.hunter_rate + noise), 0)
+        self.stock = max((self.stock+self.stock*self.growth_factor-control_signal*self.stock*self.hunter_rate + self.stock*noise), 0)
 
     def output(self):
         return self.stock
