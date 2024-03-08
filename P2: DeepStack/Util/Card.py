@@ -1,3 +1,5 @@
+import random
+
 class Card:
     def __init__(self, suit: str, value: str):
         self.suit = suit
@@ -32,7 +34,4 @@ class Deck:
         return self._deal(hand_size)
 
     def shuffle(self):
-        if self.count() < 52:
-            raise ValueError("Only full decks can be shuffled")
-        shuffle(self.cards)
-        return self
+        random.shuffle(self.cards)
