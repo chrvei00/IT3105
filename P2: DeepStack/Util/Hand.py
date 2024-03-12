@@ -6,7 +6,7 @@ class Hand:
     def __init__(self, players: list, dealer: Player, deck: Deck, blind: int):
         util.validate_hand(players, dealer, deck, blind)
         self.dealer = dealer
-        self.initial_players = players
+        self.initial_players = list(players)
         self.players = util.rotate(players, dealer)
         self.deck = deck
         self.blind = blind
@@ -29,8 +29,8 @@ class Hand:
             self.get_player_actions()
             round += 1
         print("\nHand over\n")
-        winner = util.get_winner(self.players, self.table)
-        self.reward(winner)
+        winners = util.get_winner(self.players, self.table)
+        self.reward(winners)
         self.reset()
 
     def deal_cards(self):
@@ -75,9 +75,11 @@ class Hand:
                 elif action[0] == "fold":
                     self.players.remove(player)
 
-    def reward(self, player: Player):
-        print(f"Player {player.name} has won {self.pot} chips\n")
-        player.reward(self.pot)
+    def reward(self, winners: list):
+        for player in winners:
+            player.reward(self.pot / len(winners))
+        print(f"Winners: {winners}; Pot: {self.pot}")
+        print(f"New chip counts: {[player for player in self.initial_players]}")
 
     def reset(self):
         for player in self.initial_players:
