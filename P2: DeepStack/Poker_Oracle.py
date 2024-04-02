@@ -1,8 +1,9 @@
+import copy
 import numpy as np
+from configparser import ConfigParser
 from Util.Oracle_Util import simulate
 from Util.Player import Player
 from Util.Card import Deck
-import copy
 
 def evaluate_state(table: list, hand: list) -> np.matrix:
     """
@@ -15,20 +16,11 @@ def cheat_sheet() -> dict:
     """
     Return a dictionary of the optimal strategies for each state of the game.
     """
-    pass
-
-def classify_hand(hand: list) -> str:
-    """
-    Classify the hand into one of the following categories:
-    High Card, Pair, Two Pair, Three of a Kind, Straight, Flush, Full House, Four of a Kind, Straight Flush, Royal Flush
-    """
-    pass
-
-def evaluate_showdown(table: list, players: list) -> str:
-    """
-    Evaluate the showdown and return the winner of the hand.
-    """
-    pass
+    config = ConfigParser()
+    config.read('config.ini')
+    if not config.has_section('cheat_sheet'):
+        return None
+    return dict(config['cheat_sheet'])
 
 def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: object) -> np.matrix:
     """
@@ -59,4 +51,17 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
         for opponent in opponents:
             opponent.cards = []
     # Return the utility matrix
+    config = ConfigParser()
+    config.read('config.ini')
+    if not config.has_section('cheat_sheet'):
+        config.add_section('cheat_sheet')
+    hand.sort(key=lambda x: x.get_real_value(), reverse=True)
+    format_hand = f"{hand[0].get_value()}{hand[1].get_value()}"
+    if (hand[0].get_suit() == hand[1].get_suit()):
+        suited = "Suited"
+    else:
+        suited = "Offsuit"
+    config.set("cheat_sheet", f"{format_hand}-{suited}", f"{wins / n}")
+    with open('config.ini', 'w') as configfile:
+        config.write(configfile)
     return wins / n

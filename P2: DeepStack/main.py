@@ -1,5 +1,5 @@
 from Game_Manager import Game
-from Poker_Oracle import hole_card_rollout
+from Poker_Oracle import hole_card_rollout, cheat_sheet
 from Util.Card import Deck
 
 def play():
