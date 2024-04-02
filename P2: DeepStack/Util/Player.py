@@ -12,6 +12,9 @@ class Player:
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"
 
+    def get_cards(self) -> list:
+        return self.cards
+
     def deal_card(self, card: Card):
         if len(self.cards) < 2:
             self.cards.append(card)

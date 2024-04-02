@@ -83,13 +83,13 @@ def get_winner(players: list, table: list):
     best_hand = None
     winner = []
     for player in players:
-        hand = player.cards
+        hand = player.get_cards()
         if best_hand is None:
             best_hand = hand
             winner = [player]
         else:
             comp = compare_two_hands(hand, best_hand, table)
-            if comp == 1:
+            if comp == -1:
                 best_hand = hand
                 winner = [player]
             elif comp == 0:
