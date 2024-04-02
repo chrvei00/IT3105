@@ -28,6 +28,12 @@ class Card:
             return "A"
         else:
             return value
+    def get_value(self):
+        return self.represent_value(self.value)
+    def get_real_value(self):
+        return self.value
+    def get_suit(self):
+        return self.represent_suit(self.suit)
 
 
 class Deck:
