@@ -10,14 +10,15 @@ def cheat_sheet() -> dict:
     """
     return read_cheat_sheet()
 
-def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: object) -> float:
+def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: object, cache: bool=True, save: bool=True) -> float:
     """
     Perform a hole card rollout and return the utility matrix.
     """
     # Check if rollout already performed
-    wp = read_cheat_sheet().get(format_hand(hand))
-    if wp is not None:
-        return wp
+    if cache:
+        wp = read_cheat_sheet().get(format_hand(hand))
+        if wp is not None:
+            return wp
     n = read_simultation_size()
     # Create players and opponents
     player = Player("Player", None)
@@ -33,5 +34,6 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
         if simulate(deck, init_table, player, opponents):
             wins += 1
     # Return the utility matrix
-    write_cheat_sheet(hand, wins, n)
+    if save:
+        write_cheat_sheet(hand, opponents, wins, n)
     return wins / n
