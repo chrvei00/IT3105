@@ -1,4 +1,4 @@
-from Util.Game_Util import get_winner
+import Util.Game_Util
 
 def simulate(deck: object, table: list, player: object, opponents: list) -> bool:
     """
@@ -6,12 +6,16 @@ def simulate(deck: object, table: list, player: object, opponents: list) -> bool
     """
     deck.shuffle()
     if len(table) < 5:
-        table.append(5 - deck.deal_card(len(table)))
+        cards = deck.deal_card(5 - len(table))
+        for card in cards:
+            table.append(card)
     # Deal cards to opponents
     for opponent in opponents:
-        opponent.deal_card(deck.deal_card(2))
+        cards = deck.deal_card(2)
+        for card in cards:
+            opponent.deal_card(card)
     # Determine the winner of the hand
-    winners = get_winner([player] + opponents, table)
+    winners = Util.Game_Util.get_winner([player] + opponents, table)
     # Reset opponents hands
     for opponent in opponents:
         opponent.cards = []

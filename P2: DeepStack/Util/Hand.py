@@ -1,10 +1,12 @@
 from Util.Card import Deck
 import Util.Game_Util as util
 from Util.Player import Player
+import Util.gui as gui
 
 class Hand:
-    def __init__(self, players: list, dealer: Player, deck: Deck, blind: int):
+    def __init__(self, window, players: list, dealer: Player, deck: Deck, blind: int):
         util.validate_hand(players, dealer, deck, blind)
+        self.window = window
         self.dealer = dealer
         self.initial_players = list(players)
         self.players = util.rotate(players, dealer)
@@ -29,6 +31,9 @@ class Hand:
             self.get_player_actions()
             round += 1
         print("\nHand over\n")
+        # Show cards
+        for player in self.players:
+            print(f"{player.name} has {player.cards}")
         winners = util.get_winner(self.players, self.table)
         self.reward(winners)
         self.reset()
@@ -37,7 +42,9 @@ class Hand:
         self.deck.shuffle()
         for i in range(2):
             for player in self.players:
-                player.deal_card(self.deck.deal_card())
+                cards = self.deck.deal_card()
+                for card in cards:
+                    player.cards.append(card)
     
     def blinds(self):
         self.players[0].bet(self.blind)
@@ -54,12 +61,13 @@ class Hand:
         if round == 0:
             return
         elif round == 1:
-            for i in range(3):
-                self.table.append(self.deck.deal_card())
+            cards = self.deck.deal_card(3)
         else:
-            self.table.append(self.deck.deal_card())
+            cards = self.deck.deal_card()
+        for card in cards:
+            self.table.append(card)
         round_names = {0: "preflop", 1: "flop", 2: "turn", 3: "river"}
-        print(f"\nDealing {round_names[round]}")
+        print(f"\nDealing {round_names[round]}\n")
         print(f"Table: {self.table}\n")
     
     def get_player_actions(self):
@@ -67,12 +75,23 @@ class Hand:
         while first or not util.round_over(self.players, self.high_bet):
             first = False
             for player in self.players:
-                action = player.get_action(self.high_bet, self.pot, self.table, self.players, self.blind)
-                if action[0] == "bet" or action[0] == "call":
-                    player.bet(action[1])
-                    self.pot += action[1]
+                gui.visualize_players(self.window, self.players)
+                action = player.get_action(self.window, self.high_bet, self.pot, self.table, self.players, self.blind)
+                if action == "call":
+                    amount = self.high_bet - player.current_bet
+                    player.bet(amount)
+                    self.pot += amount
                     self.high_bet = util.get_high_bet(self.players)
-                elif action[0] == "fold":
+                elif action == "bet":
+                    player.bet(self.blind * 2)
+                    self.pot += self.blind * 2
+                    self.high_bet = util.get_high_bet(self.players)
+                elif action == "all-in":
+                    amount = player.chips
+                    player.bet(amount)
+                    self.pot += amount
+                    self.high_bet = util.get_high_bet(self.players)
+                elif action == "fold":
                     self.players.remove(player)
 
     def reward(self, winners: list):

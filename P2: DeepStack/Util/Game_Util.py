@@ -3,6 +3,7 @@ from Util.Player import Player
 from Util.Card import Deck
 from itertools import combinations
 from collections import Counter
+import Util.gui as gui
 
 def validate_game(Num_Human_Players, Num_AI_Players, Game_Type):
     if Num_Human_Players < 0 or Num_AI_Players < 0:
@@ -107,8 +108,8 @@ def best_hand_from_seven(cards):
 
 def compare_two_hands(hand1, hand2, board):
     """Compares the best hands of two players given their private cards and the board."""
-    combined_hand1 = hand1 + board
-    combined_hand2 = hand2 + board
+    combined_hand1 = board + hand1
+    combined_hand2 = board + hand2
     
     best_hand1 = best_hand_from_seven(combined_hand1)
     best_hand2 = best_hand_from_seven(combined_hand2)
@@ -141,7 +142,7 @@ RANKS = {
 
 def evaluate_hand(hand):
     """Evaluates a hand and returns its rank and the key cards for comparison."""
-    values = sorted([card.value for card in hand], reverse=True)
+    values = sorted([card.get_real_value() for card in hand], reverse=True)
     suits = [card.suit for card in hand]
     value_counts = Counter(values)
     is_flush = len(set(suits)) == 1
@@ -189,3 +190,19 @@ def compare_hands(hand1, hand2):
             elif key_cards1[i] < key_cards2[i]:
                 return 1
         return 0  # Hands are completely equal
+
+def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
+    gui.visualize_AI(window, table, name, chips, pot, current_bet, high_bet)
+    print(f"\n{name} has {chips} chips, the pot is {pot}, the current bet is {current_bet}, and the high bet is {high_bet}")
+    print(f"\nTable: {table}\n")
+
+def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
+    gui.visualize_human(window, table, cards, name, chips, pot, current_bet, high_bet)
+    input(f"\n{name}, press enter to choose your action")
+    print(f"\n{name} has {chips} chips, the pot is {pot}, the current bet is {current_bet}, and the high bet is {high_bet}")
+    print(f"To call: {high_bet - current_bet}")
+    print(f"\nTable: {table}")
+    print(f"Your cards: {cards}\n")
+
+def get_string_representation_cards(cards: list):
+    return [f"{card.get_value()}{card.get_suit()}" for card in cards]

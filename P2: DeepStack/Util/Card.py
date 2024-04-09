@@ -35,6 +35,9 @@ class Card:
     def get_suit(self):
         return self.represent_suit(self.suit)
 
+    def get_all_cards():
+        return [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2,3,4,5,6,7,8,9,10,11,12,13,14]]
+
 
 class Deck:
     def __init__(self):
@@ -55,8 +58,8 @@ class Deck:
         self.cards = self.cards[:-actual]
         return cards
 
-    def deal_card(self):
-        return self._deal(1)[0]
+    def deal_card(self, num=1):
+        return self._deal(num)
 
     def deal_hand(self, hand_size):
         return self._deal(hand_size)

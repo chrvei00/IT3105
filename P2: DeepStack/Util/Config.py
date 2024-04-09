@@ -1,3 +1,5 @@
+from configparser import ConfigParser
+
 def read_simultation_size() -> int:
     """
     Read the simulation size from the config file.
