@@ -31,10 +31,10 @@ def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
     players = []
     # Create human players
     for i in range(Num_Human_Players):
-        players.append(Player(f"H{i}" , "human"))
+        players.append(Player(f"H {i}" , "human"))
     # Create AI players
     for i in range(Num_AI_Players):
-        players.append(Player(f"AI{i}", "AI"))
+        players.append(Player(f"AI {i}", "AI"))
     # Give each player starting chips
     for player in players:
         player.chips = start_chips

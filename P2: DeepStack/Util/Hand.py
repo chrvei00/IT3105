@@ -26,6 +26,7 @@ class Hand:
         self.deal_cards()
         self.blinds()
         round = 0
+        gui.visualize_players(self.window, self.players)
         while not util.hand_over(self.players, self.table):
             self.deal_table(round)
             self.get_player_actions()
@@ -72,6 +73,7 @@ class Hand:
     
     def get_player_actions(self):
         first = True
+        gui.visualize_players(self.window, self.players)
         while first or not util.round_over(self.players, self.high_bet):
             first = False
             for player in self.players:

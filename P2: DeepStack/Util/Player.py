@@ -63,7 +63,7 @@ class Player:
         pass
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
-        payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/self.current_bet        
+        payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet        
         if random.random() < 0.15:
             if len(self.get_possible_actions(high_bet, blind)) == 1:
                 return self.get_possible_actions(high_bet, blind)[0]

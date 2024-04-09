@@ -4,12 +4,14 @@ import Util.Game_Util as util
 def create_poker_window(num_players: int = 2):
     large_font = ('Helvetica', 20)
     player_rows = [
-        [sg.Text(f"Player {i+1}", size=(15, 1)), sg.Text('Chips:'), sg.Text('', key=f'-CHIPS-{i}-', size=(5, 1)),
-         sg.Text('Current Bet:'), sg.Text('', key=f'-BET-{i}-', size=(5, 1))]
+        [sg.Text(f"Player:", font=large_font), sg.Text('', key=f'-NAME-{i}-', size=(5, 1), font=large_font),
+         sg.Text('Chips:', font=large_font), sg.Text('', key=f'-CHIPS-{i}-', size=(5, 1), font=large_font),
+         sg.Text('Current Bet:', font=large_font), sg.Text('', key=f'-BET-{i}-', size=(5, 1), font=large_font)
+        ]
         for i in range(num_players)
     ]
     layout = [
-        [sg.Column(player_rows, key='-PLAYERS-', size=(None, None), scrollable=True)],
+        [sg.Column(player_rows, key='-PLAYERS-', size=(500, 200), scrollable=False)],
         [sg.Text('', key='-INFO-', size=(50, 1), font=large_font)],
         [sg.Text('Table: ', font=large_font), sg.Text('', key='-TABLE-', size=(40, 1), font=large_font)],
         [sg.Text('Your cards: ', font=large_font), sg.Text('', key='-CARDS-', size=(40, 1), font=large_font)],
@@ -19,6 +21,7 @@ def create_poker_window(num_players: int = 2):
 
 def visualize_players(window, players: list):
     for idx, player in enumerate(players):
+        window[f'-NAME-{idx}-'].update(player.name)
         window[f'-CHIPS-{idx}-'].update(str(player.chips))
         window[f'-BET-{idx}-'].update(str(player.current_bet))
 
