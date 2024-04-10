@@ -1,10 +1,10 @@
 from Game_Manager import Game
-from Util.gui import create_poker_window
+import Util.gui as gui
 
 def play():
-    window = create_poker_window(4)
-    window.read(timeout=0)
-    game = Game(window=window, Num_Human_Players=1, Num_AI_Rollout_Players=3)
+    Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = gui.create_game_setup_window()
+    window = gui.create_poker_window(num_players=Num_Human_Players + Num_AI_Rollout_Players + Num_AI_Resolve_Players)
+    game = Game(window=window, Num_Human_Players=Num_Human_Players, Num_AI_Rollout_Players=Num_AI_Rollout_Players, Num_AI_Resolve_Players=0, Game_Type="simple", start_chips=start_chips)
     game.start()
     window.close()
 

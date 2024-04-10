@@ -193,16 +193,9 @@ def compare_hands(hand1, hand2):
 
 def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
     gui.visualize_AI(window, table, name, chips, pot, current_bet, high_bet)
-    print(f"\n{name} has {chips} chips, the pot is {pot}, the current bet is {current_bet}, and the high bet is {high_bet}")
-    print(f"\nTable: {table}\n")
 
-def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
-    gui.visualize_human(window, table, cards, name, chips, pot, current_bet, high_bet)
-    input(f"\n{name}, press enter to choose your action")
-    print(f"\n{name} has {chips} chips, the pot is {pot}, the current bet is {current_bet}, and the high bet is {high_bet}")
-    print(f"To call: {high_bet - current_bet}")
-    print(f"\nTable: {table}")
-    print(f"Your cards: {cards}\n")
+def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int, actions: list):
+    return gui.visualize_human(window, table, cards, name, chips, pot, current_bet, high_bet, actions)
 
 def get_string_representation_cards(cards: list):
     return [f"{card.get_value()}{card.get_suit()}" for card in cards]

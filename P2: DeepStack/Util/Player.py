@@ -11,6 +11,8 @@ class Player:
         self.chips = 0
         self.current_bet = 0
         self.cards = []
+        self.active_in_hand = True
+        self.is_all_in = False
     
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"
@@ -28,16 +30,18 @@ class Player:
         self.chips += amount
 
     def bet(self, amount: int):
-        if amount > self.chips:
-            raise ValueError("Player cannot bet more than they have")
+        if amount >= self.chips:
+            self.is_all_in = True
+            self.current_bet += self.chips
+            self.chips = 0
+            return (f"{self.name} is all in")
         self.chips -= amount
         self.current_bet += amount
-        print(f"{self.name} has bet {amount} chips")
+        return (f"{self.name} has bet {amount} chips")
 
     def get_action(self, window, high_bet: int, pot: int, table: list, players: list, blind: int):
         if self.type == "human":
-            util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet)
-            return inquirer.list_input("Enter action", choices=self.get_possible_actions(high_bet, blind))
+            return util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
         elif self.type == "AI-resolver":
             return self.get_AI_Resolver_action(high_bet, pot, table, players, blind)
         else:
@@ -58,25 +62,28 @@ class Player:
     def reset_cards_and_bet(self):
         self.cards = []
         self.current_bet = 0
+        self.active_in_hand = True
 
     def get_AI_Resolver_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
         pass
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
-        payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet        
+        payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet   
+        pa = self.get_possible_actions(high_bet, blind)     
         if random.random() < 0.15:
-            if len(self.get_possible_actions(high_bet, blind)) == 1:
-                return self.get_possible_actions(high_bet, blind)[0]
-            return random.choice(self.get_possible_actions(high_bet, blind).remove("fold"))
-            
+            if len(pa) == 1:
+                return pa[0]
+            if pa.__contains__("fold"):
+                pa.remove("fold")
+            return random.choice(pa)
         else:
             if payout < 0.8:
                 if high_bet - self.current_bet <= 0:
                     return "call"
                 return "fold"
-            elif payout < 1.4 and self.get_possible_actions(high_bet, blind).__contains__("call"):
+            elif payout < 1.4 and pa.__contains__("call"):
                 return "call"
-            elif payout > 1.4 and self.get_possible_actions(high_bet, blind).__contains__("bet"):
+            elif payout > 1.4 and pa.__contains__("bet"):
                 return "bet"
             else:
                 return "fold"
