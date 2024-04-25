@@ -25,12 +25,18 @@ class Game:
             # Visualize winner
             gui.visualize_winner(winner)
             # Remove players with no chips
+            prev_players = list(self.players)
             for player in self.players:
                 if player.chips <= 0:
                     gui.add_history(self.window, f"{player.name} has run out of chips")
                     gui.remove_player(self.window, player)
                     self.players.remove(player)
-            self.dealer = util.next_dealer(self.players, self.dealer)
+            if len(self.players) == 1:
+                break
+            self.dealer = util.next_dealer(prev_players, self.dealer)
+            while self.dealer not in self.players:
+                self.dealer = util.next_dealer(prev_players, self.dealer)
+            
         #Save the history and stats to file
         players_str = ', '.join([f"{player.name}: {player.chips}" for player in self.players])
         gui.save_history_to_file(self.window, players_str)

@@ -47,7 +47,9 @@ class Hand:
     def determine_winners(self):
         winners = []
         # Determine wether there is a difference in the bets of players (meaning some players are all in)
-        while len(list(filter(lambda x: x.current_bet != self.high_bet, self.active_players()))) > 0:
+        print("Determining winners", self.active_players(), "line 50")
+        print(f"Checking while loop: {any(x.current_bet != self.high_bet for x in self.active_players())}", "line 51")
+        while any(x.current_bet != self.high_bet for x in self.active_players()):
             # Find the player with the lowest bet
             lowest_bet = min(filter(lambda x: x.current_bet != self.high_bet, self.active_players()), key=lambda x: x.current_bet)
             # Determine winners
