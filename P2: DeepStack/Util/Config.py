@@ -1,5 +1,13 @@
 from configparser import ConfigParser
 
+def read_setup() -> bool:
+    """
+    Read the setup from the config file.
+    """
+    config = ConfigParser()
+    config.read('config.ini')
+    return config.getboolean('setup', 'auto')
+
 def read_simultation_size() -> int:
     """
     Read the simulation size from the config file.

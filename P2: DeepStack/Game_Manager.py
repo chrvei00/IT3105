@@ -27,8 +27,11 @@ class Game:
             gui.visualize_winner(winner)
             # Remove players with no chips
             for player in self.players:
-                if player.chips <= self.blind * 2:
+                if player.chips <= 0:
                     gui.add_history(self.window, f"{player.name} has run out of chips")
                     self.players.remove(player)
+        #Save the history and stats to file
+        players_str = ', '.join([f"{player.name}: {player.chips}" for player in self.players])
+        gui.save_history_to_file(self.window, players_str)
         # Display the winner
         gui.visualize_winner(f"\nPlayer {self.players[0]} has won the game\n")

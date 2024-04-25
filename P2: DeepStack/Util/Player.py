@@ -13,6 +13,7 @@ class Player:
         self.cards = []
         self.active_in_hand = True
         self.is_all_in = False
+        self.has_raised = False
     
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"
@@ -30,11 +31,16 @@ class Player:
         self.chips += amount
 
     def bet(self, amount: int):
-        if amount >= self.chips:
+        if amount < 0:
+            raise ValueError("Amount must be greater than 0")
+        elif self.chips < 0:
+            raise ValueError("Player does not have any chips")
+        if amount >= self.chips and self.chips > 0:
+            amount = self.chips
             self.is_all_in = True
             self.current_bet += self.chips
             self.chips = 0
-            return (f"{self.name} is all in")
+            return (f"{self.name} is all in, with a bet of {amount} chips")
         self.chips -= amount
         self.current_bet += amount
         return (f"{self.name} has bet {amount} chips")
@@ -52,10 +58,12 @@ class Player:
     
     def get_possible_actions(self, high_bet: int, blind: int):
         actions = []
-        if high_bet - self.current_bet >= 0:
+        if high_bet - self.current_bet >= 0 and self.chips > high_bet - self.current_bet:
             actions.append("call")
-        if self.chips > blind * 2:
+        if self.chips >= high_bet - self.current_bet + blind * 2 and self.has_raised == False:
             actions.append("bet")
+        if self.chips > 0:
+            actions.append("all-in")
         actions.append("fold")
         return actions
 
@@ -63,6 +71,8 @@ class Player:
         self.cards = []
         self.current_bet = 0
         self.active_in_hand = True
+        self.is_all_in = False
+        self.has_raised = False
 
     def get_AI_Resolver_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
         pass

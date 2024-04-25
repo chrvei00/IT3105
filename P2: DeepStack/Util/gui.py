@@ -1,5 +1,8 @@
 import PySimpleGUI as sg
 import Util.Game_Util as util
+import datetime
+import os
+import threading
 
 def create_game_setup_window():
     layout = [
@@ -50,11 +53,29 @@ def create_poker_window(num_players: int = 2):
         [
             sg.Column(left_layout), 
             sg.VSeperator(), 
-            sg.Column(right_layout)
+            sg.Column(right_layout),
         ]
     ]
 
-    return sg.Window('Poker Game', layout, finalize=True, font=large_font)
+    return sg.Window('Poker Game', layout, finalize=True, font=large_font, return_keyboard_events=True)
+
+def custom_popup(message):
+    # Layout for the popup window
+    layout = [
+        [sg.Text(message)],
+        [sg.Button('OK', key='OK')]  # Use a specific key for the button
+    ]
+
+    # Create the window
+    window = sg.Window('Popup', layout, modal=True, return_keyboard_events=True)
+
+    # Event loop
+    while True:
+        event, values = window.read()
+        if event in (sg.WIN_CLOSED, 'OK', '\r', 'Return:603979789'):  # Check for return key ('\r') on Mac
+            break
+
+    window.close()
 
 def visualize_players(window, players: list):
     for idx, player in enumerate(players):
@@ -83,11 +104,19 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
     for action in ['call', 'bet', 'fold']:
         window[action].update(visible=action in actions)
     while True:
-        event, values = window.read()
+        event, values = window.read(timeout=None)
         if event == sg.WIN_CLOSED:
             break
-        if event in actions:
-            act = event
+        if event in actions or event in ['q', 'w', 'e']:
+            # Translate from q, w, e to call, bet, fold
+            if event == 'q':
+                act = 'call'
+            elif event == 'w':
+                act = 'bet'
+            elif event == 'e':
+                act = 'fold'
+            else:
+                act = event
             break
     return act
 
@@ -98,14 +127,14 @@ def visualize_winner(window, winner: str):
     window['call'].update(visible=False)
     window['bet'].update(visible=False)
     window['fold'].update(visible=False)
-    sg.popup(f"{winner} has won the hand")
+    custom_popup(f"{winner} has won the hand")
 
 def wait_for_user_to_start_new_hand_popup(window):
     # Show a popup to wait for the user to start a new hand
-    sg.popup("Click OK to start the next hand", title="Next Hand", font=('Helvetica', 20))
+    custom_popup("Press OK to start a new hand")
 
 def visualize_winner(winner_str: str):
-    sg.popup(f"{winner_str}", title="Game Over", font=('Helvetica', 20))
+    custom_popup(f"{winner_str}")
     
 def add_history(window, message):
     current_history = window['-HISTORY-'].get()
@@ -114,3 +143,14 @@ def add_history(window, message):
 
 def update_turn(window, player):
     window['-TURN-'].update(f"{player.name} is up")
+
+def save_history_to_file(window, players: str):
+    # Get string representation of the current date with time
+    date = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M")
+    history = window['-HISTORY-'].get()
+    # Create a new file with the date as the name
+    if not os.path.exists("./log"):
+        os.mkdir("./log")
+    with open(f"./log/{date}.txt", "w") as f:
+        # Write the contents of the history variable to the file
+        f.write(f"{date}\n{players}\n{history}")

@@ -28,6 +28,7 @@ class Hand:
         self.deck.shuffle()
         self.deal_cards()
         self.blinds()
+        self.all_in_pots = []
         round = 0
         gui.visualize_players(self.window, self.players)
         while not util.hand_over(self.active_players(), self.table):
@@ -73,8 +74,14 @@ class Hand:
         gui.add_history(self.window, f"{self.players[0].name} is the small blind and {self.players[1].name} is the big blind")
         self.players[0].bet(self.blind)
         self.players[1].bet(self.blind * 2)
-        self.pot += self.blind + self.blind * 2
-        self.high_bet = self.blind * 2
+        if self.players[0].chips == 0:
+            self.players[0].is_all_in = True
+            gui.add_history(self.window, f"{self.players[0].name} is all in")
+        if self.players[1].chips == 0:
+            self.players[1].is_all_in = True
+            gui.add_history(self.window, f"{self.players[1].name} is all in")
+        self.pot += self.players[0].current_bet + self.players[1].current_bet
+        self.high_bet = util.get_high_bet(self.players)
 
     def fold(self, player: Player):
         player.active_in_hand = False
@@ -97,15 +104,15 @@ class Hand:
     def get_player_actions(self):
         first = True
         gui.visualize_players(self.window, self.players)
-        previous_raiser = None
         while first or not util.round_over(self.active_players(), self.high_bet):
             for player in self.active_players():
                 gui.update_turn(self.window, player)
                 if player.is_all_in:
                     continue
-                if player == previous_raiser and player.current_bet == self.high_bet:
+                if player.has_raised and player.current_bet == self.high_bet:
                     continue
                 gui.visualize_players(self.window, self.players)
+                allowed_actions = player.get_possible_actions(self.high_bet, self.blind)
                 action = player.get_action(self.window, self.high_bet, self.pot, self.table, self.active_players(), self.blind)
                 if action == "call":
                     prev_bet = player.current_bet
@@ -126,6 +133,8 @@ class Hand:
                 elif action == "fold":
                     self.fold(player)
             first = False
+        for player in self.players:
+            player.has_raised = False
 
     def reward(self, winners: list, amount: int=None):
         if amount is not None:
