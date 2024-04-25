@@ -60,7 +60,7 @@ def round_over(players: list, high_bet: int):
         return True
     if len(players) == 1:
         return True
-    for player in players:
+    for player in filter(lambda x: x.active_in_hand and not x.is_all_in, players):
         if player.current_bet != high_bet:
             return False
     return True

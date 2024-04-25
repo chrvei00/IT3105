@@ -71,7 +71,7 @@ def custom_popup(message):
 
     # Event loop
     while True:
-        event, values = window.read()
+        event, values = window.read(timeout=None)
         if event in (sg.WIN_CLOSED, 'OK', '\r', 'Return:603979789'):  # Check for return key ('\r') on Mac
             break
 
@@ -91,6 +91,7 @@ def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_b
     window['-INFO-'].update(info)
     window['-TABLE-'].update(table_str)
     window['-CARDS-'].update('')  # Clear the cards for AI's turn
+    window.refresh()
 
 def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int, actions: list):
     info = f"Pot: {pot}, your current bet: {current_bet}, highest bet: {high_bet}, to call: {high_bet - current_bet}"
@@ -148,6 +149,7 @@ def add_history(window, message):
     window['-HISTORY-'].update(value=new_message)
 
 def update_turn(window, player, players: list):
+    window.refresh()
     if player.type == "human":
         window['-TURN-'].update(f"{player.name} is up (q: fold, w: call, e: bet, r: all-in)")
     else:

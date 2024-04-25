@@ -4,7 +4,7 @@ import Util.Config as config
 
 def play(auto):
     if auto:
-        Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = 3, 0, 0, "simple", 100
+        Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = 3, 0, 0, "simple", 300
     else:
         Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = gui.create_game_setup_window()
     
