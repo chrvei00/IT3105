@@ -33,34 +33,47 @@ class Hand:
         gui.visualize_players(self.window, self.players)
         while not util.hand_over(self.active_players(), self.table):
             self.deal_table(round)
-            self.get_player_actions()
+            self.get_player_actions(first_round=round==0)
             round += 1
         gui.add_history(self.window, "Hand over")
-        # Show cards
-        all_winners = []
-        for player in self.active_players():
-            gui.add_history(self.window, f"{player.name} has {player.cards}")
-        winners = util.get_winner(self.active_players(), self.table)
-        while len([winner for winner in winners if winner.is_all_in]) > 0:
-            winners = util.get_winner(self.active_players(), self.table)        
-            if len([winner for winner in winners if winner.is_all_in]) > 0:
-                all_in_winners = sort([winner for winner in winners if winner.is_all_in], key=lambda x: x.current_bet)
-                dealtmoney = 0
-                for winner in all_in_winners:
-                    all_winners.append(winner)
-                    self.reward([winner], amount=(winner.current_bet-dealtmoney)*len(self.active_players()))
-                    self.pot -= (winner.current_bet-dealtmoney)*len(self.active_players())
-                    dealtmoney = winner.current_bet
-                    winner.active_in_hand = False
-        if self.pot > 0:
-            winners = util.get_winner(self.active_players(), self.table)
-            for winner in winners:
-                all_winners.append(winner)
-                self.reward([winner], amount=self.pot/len(winners))
-
-        winner_str = ', '.join([f"{winner.name}: {winner.cards}" for winner in all_winners])
+        if any(x.is_all_in for x in self.players):
+            self.pot = util.adjust_hand_params(self.players, self.pot)
+        
+        winners = self.determine_winners()
+        winner_str = ', '.join([f"{winner.name}: {winner.cards}" for winner in winners])
         self.reset()
         return winner_str
+    
+    def determine_winners(self):
+        winners = []
+        # Determine wether there is a difference in the bets of players (meaning some players are all in)
+        while len(list(filter(lambda x: x.current_bet != self.high_bet, self.active_players()))) > 0:
+            # Find the player with the lowest bet
+            lowest_bet = min(filter(lambda x: x.current_bet != self.high_bet, self.active_players()), key=lambda x: x.current_bet)
+            # Determine winners
+            winners = util.get_winner(self.active_players(), self.table)
+            for player in self.active_players():
+                print(player.name, player.cards)
+            print("Determining winners", winners, "line 57")
+            # Remove the players matching the lowest bet from the active players
+            self.pot -= lowest_bet.current_bet*(len(self.active_players()))
+            # Reward winner and adjust pot and bets
+            self.reward(winners, amount=lowest_bet.current_bet*len(self.active_players()))
+            self.pot -= lowest_bet.current_bet*len(self.active_players())
+            for player in self.active_players():
+                if player.current_bet <= lowest_bet.current_bet:
+                    player.active_in_hand = False
+            for player in self.active_players():
+                player.current_bet -= lowest_bet.current_bet
+
+        if self.pot > 0:
+            additional_winners = (util.get_winner(self.active_players(), self.table))
+            for winner in additional_winners:
+                winners.append(winner)
+            print("Determining winners", additional_winners, "line 73")
+            for winner in additional_winners:
+                self.reward(additional_winners, amount=self.pot)
+        return winners
 
     def deal_cards(self):
         self.deck.shuffle()
@@ -101,40 +114,53 @@ class Hand:
         round_names = {0: "preflop", 1: "flop", 2: "turn", 3: "river"}
         gui.add_history(self.window, f"Dealing {round_names[round]}: {cards}")
     
-    def get_player_actions(self):
-        first = True
+    def get_player_actions(self, first_round: bool):
         gui.visualize_players(self.window, self.players)
-        while first or not util.round_over(self.active_players(), self.high_bet):
-            for player in self.active_players():
-                gui.update_turn(self.window, player)
-                if player.is_all_in:
-                    continue
-                if player.has_raised and player.current_bet == self.high_bet:
-                    continue
-                gui.visualize_players(self.window, self.players)
-                allowed_actions = player.get_possible_actions(self.high_bet, self.blind)
-                action = player.get_action(self.window, self.high_bet, self.pot, self.table, self.active_players(), self.blind)
-                if action == "call":
-                    prev_bet = player.current_bet
-                    gui.add_history(self.window, player.bet(self.high_bet - player.current_bet))
-                    self.pot += player.current_bet - prev_bet
-                    self.high_bet = util.get_high_bet(self.players)
-                elif action == "bet":
-                    previous_raiser = player
-                    prev_bet = player.current_bet
-                    gui.add_history(self.window, player.bet(self.high_bet - player.current_bet + self.blind * 2))
-                    self.pot += player.current_bet - prev_bet
-                    self.high_bet = util.get_high_bet(self.players)
-                elif action == "all-in":
-                    prev_bet = player.current_bet
-                    gui.add_history(self.window, player.bet(player.chips))
-                    self.pot += player.current_bet - prev_bet
-                    self.high_bet = util.get_high_bet(self.players)
-                elif action == "fold":
-                    self.fold(player)
-            first = False
+        self.player_action_round(first_round)
+        while not util.round_over(self.active_players(), self.high_bet):
+            self.player_action_round()
         for player in self.players:
             player.has_raised = False
+
+        
+    def player_action_round(self, first_round: bool=False):
+        if first_round:
+            players = self.active_players()[2:] + self.active_players()[:2]
+        else:
+            players = self.active_players()
+        for player in players:
+            if(util.end_action_round(self.active_players())):
+                break
+            gui.update_turn(self.window, player, self.players)
+            if player.is_all_in or (player.has_raised and player.current_bet == self.high_bet):
+                continue
+            gui.visualize_players(self.window, self.players)
+            allowed_actions = player.get_possible_actions(self.high_bet, self.blind)
+            action = player.get_action(self.window, self.high_bet, self.pot, self.table, self.active_players(), self.blind)
+            if action not in allowed_actions:
+                raise ValueError(f"Action {action} not allowed for player {player.name}")
+            if action == "fold":
+                self.fold(player)
+            elif action == "call":
+                prev_bet = player.current_bet
+                gui.add_history(self.window, player.bet(self.high_bet - player.current_bet))
+                self.pot += player.current_bet - prev_bet
+                self.high_bet = util.get_high_bet(self.players)
+            elif action == "bet":
+                player.has_raised = True
+                prev_bet = player.current_bet
+                gui.add_history(self.window, player.bet(self.high_bet - player.current_bet + self.blind * 2))
+                self.pot += player.current_bet - prev_bet
+                self.high_bet = util.get_high_bet(self.players)
+            elif action == "all-in":
+                player.has_raised = True
+                player.is_all_in = True
+                prev_bet = player.current_bet
+                gui.add_history(self.window, player.bet(player.chips))
+                self.pot += player.current_bet - prev_bet
+                self.high_bet = util.get_high_bet(self.players)
+
+
 
     def reward(self, winners: list, amount: int=None):
         if amount is not None:
@@ -143,7 +169,7 @@ class Hand:
         else:
             for player in winners:
                 player.reward(self.pot / len(winners))
-        gui.add_history(self.window, f"Winner(s): {', '.join([winner.name for winner in winners])}")
+        gui.add_history(self.window, f"Winner(s): {', '.join([winner.name for winner in winners])}, amount: {amount}")
 
     def reset(self):
         for player in self.initial_players:

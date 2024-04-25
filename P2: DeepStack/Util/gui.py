@@ -41,8 +41,8 @@ def create_poker_window(num_players: int = 2):
         [sg.Column(player_rows, key='-PLAYERS-', size=(500, 200), scrollable=False)],
         [sg.Text('Table: '), sg.Text('', key='-TABLE-', size=(40, 1))],
         [sg.Text('Your cards: '), sg.Text('', key='-CARDS-', size=(40, 1))],
-        [sg.Text('', key='-INFO-', size=(50, 1))],
-        [sg.Button('call'), sg.Button('bet'), sg.Button('fold')]
+        [sg.Text('', key='-INFO-', size=(50, 3))],
+        [sg.Button('fold'), sg.Button('call'), sg.Button('bet'), sg.Button('all-in')]
     ]
     right_layout = [
         [sg.Text("History")],
@@ -78,16 +78,15 @@ def custom_popup(message):
     window.close()
 
 def visualize_players(window, players: list):
-    for idx, player in enumerate(players):
-        window[f'-NAME-{idx}-'].update(player.name)
-        window[f'-CHIPS-{idx}-'].update(str(player.chips))
-        window[f'-BET-{idx}-'].update(str(player.current_bet))
+    for player in players:
+        window[f'-NAME-{player.index}-'].update(player.name)
+        window[f'-CHIPS-{player.index}-'].update(str(player.chips))
+        window[f'-BET-{player.index}-'].update(str(player.current_bet))
 
 def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
-    window['call'].update(visible=False)
-    window['bet'].update(visible=False)
-    window['fold'].update(visible=False)
-    info = f"{name} has {chips} chips, the pot is {pot}, the current bet is {current_bet}, and the high bet is {high_bet}"
+    for action in ['fold', 'call', 'bet', 'all-in']:
+        window[action].update(visible=False)
+    info = f"{name} is deciding what to do..."
     table_str = ', '.join(util.get_string_representation_cards(table))
     window['-INFO-'].update(info)
     window['-TABLE-'].update(table_str)
@@ -101,23 +100,30 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
     window['-TABLE-'].update(table_str)
     window['-CARDS-'].update(cards_str)
     # Decide which buttons to show depending on the possible actions
-    for action in ['call', 'bet', 'fold']:
-        window[action].update(visible=action in actions)
+    for action in ['fold', 'call', 'bet', 'all-in']:
+        window[action].update(visible=True)
+    # Wait for the user to press a button
     while True:
         event, values = window.read(timeout=None)
         if event == sg.WIN_CLOSED:
             break
-        if event in actions or event in ['q', 'w', 'e']:
+        if event in ['q', 'w', 'e', 'r']:
             # Translate from q, w, e to call, bet, fold
             if event == 'q':
-                act = 'call'
-            elif event == 'w':
-                act = 'bet'
-            elif event == 'e':
                 act = 'fold'
+            elif event == 'w':
+                act = 'call'
+            elif event == 'e':
+                act = 'bet'
+            elif event == 'r':
+                act = 'all-in'
             else:
                 act = event
-            break
+            
+            if act in actions:
+                break
+            else:
+                custom_popup(f"Action {act} not allowed")
     return act
 
 def visualize_winner(window, winner: str):
@@ -141,8 +147,28 @@ def add_history(window, message):
     new_message = message + "\n" + "-"*50 + "\n" + current_history  # Prepend new message and separator
     window['-HISTORY-'].update(value=new_message)
 
-def update_turn(window, player):
-    window['-TURN-'].update(f"{player.name} is up")
+def update_turn(window, player, players: list):
+    if player.type == "human":
+        window['-TURN-'].update(f"{player.name} is up (q: fold, w: call, e: bet, r: all-in)")
+    else:
+        window['-TURN-'].update(f"{player.name} is up")
+    if player.type != "human":
+        for action in ['fold', 'call', 'bet', 'all-in']:
+            window[action].update(visible=False)
+        window['-INFO-'].update(f"{player.name} is deciding what to do...")
+    for o_player in players:
+        if not o_player.active_in_hand:
+            window[f'-NAME-{o_player.index}-'].update(text_color='black', background_color='red')
+        else:
+            window[f'-NAME-{o_player.index}-'].update(text_color='black', background_color='white')
+    window[f'-NAME-{player.index}-'].update(f'{player.name}', text_color='black', background_color='green')
+    window.refresh()
+
+def remove_player(window, player):
+    if window[f'-NAME-{player.index}-'].get() == player.name:
+        window[f'-NAME-{player.index}-'].update(f'{player.name} (out)', text_color='red')
+        window[f'-CHIPS-{player.index}-'].update('')
+        window[f'-BET-{player.index}-'].update('')
 
 def save_history_to_file(window, players: str):
     # Get string representation of the current date with time

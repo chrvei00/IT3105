@@ -31,10 +31,10 @@ def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
     players = []
     # Create human players
     for i in range(Num_Human_Players):
-        players.append(Player(f"H {i}" , "human"))
+        players.append(Player(f"H {i}" , "human", i))
     # Create AI players
     for i in range(Num_AI_Players):
-        players.append(Player(f"AI {i}", "AI"))
+        players.append(Player(f"AI {i}", "AI", i + Num_Human_Players))
     # Give each player starting chips
     for player in players:
         player.chips = start_chips
@@ -56,10 +56,50 @@ def hand_over(players: list, table: list):
     return len(players) == 1 or len(table) == 5
 
 def round_over(players: list, high_bet: int):
+    if skip_player_actions(players):
+        return True
+    if len(players) == 1:
+        return True
     for player in players:
         if player.current_bet != high_bet:
             return False
     return True
+
+def skip_player_actions(players: list):
+    count_not_all_in = 0
+    for player in players:
+        if player.is_all_in == False:
+            count_not_all_in += 1
+    if count_not_all_in <= 1:
+        return True
+
+def end_action_round(players: list):
+    #TODO circle back to this, you have to fix the determination of the winner first
+    if len(players) == 1:
+        return True
+    if skip_player_actions(players):
+        for player in players:
+            if player.is_all_in == False and player.current_bet - get_high_bet(players) < 0:
+                return False
+        return True
+    return False
+
+def adjust_hand_params(players: list, pot: int):
+    high_bet = get_high_bet(players)
+    non_all_in_players = []
+    for player in players:
+        if player.is_all_in == False:
+            non_all_in_players.append(player)
+    if len(non_all_in_players) == 1:
+        high_bet_excluded_non_all_in = 0
+        for player in players:
+            if player != non_all_in_players[0] and (player.current_bet > high_bet_excluded_non_all_in):
+                high_bet_excluded_non_all_in = player.current_bet
+        if high_bet_excluded_non_all_in < non_all_in_players[0].current_bet:
+            non_all_in_players[0].chips += non_all_in_players[0].current_bet - high_bet_excluded_non_all_in
+            pot -= non_all_in_players[0].current_bet - high_bet_excluded_non_all_in
+            non_all_in_players[0].current_bet = high_bet_excluded_non_all_in
+    return pot
 
 def rotate(players: list, dealer: Player):
     while players[-1] != dealer:
@@ -82,20 +122,20 @@ def get_high_bet(players: list):
 
 def get_winner(players: list, table: list):
     best_hand = None
-    winner = []
+    winners = []
     for player in players:
         hand = player.get_cards()
         if best_hand is None:
             best_hand = hand
-            winner = [player]
+            winners = [player]
         else:
             comp = compare_two_hands(hand, best_hand, table)
             if comp == -1:
                 best_hand = hand
-                winner = [player]
+                winners = [player]
             elif comp == 0:
-                winner.append(player)
-    return winner
+                winners.append(player)
+    return winners
 
 def best_hand_from_seven(cards):
     """Given seven cards, returns the best five-card hand."""

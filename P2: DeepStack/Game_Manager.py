@@ -21,7 +21,6 @@ class Game:
             hand = Hand(self.window, self.players, self.dealer, self.deck, self.blind)
             winner = hand.play()
             # Rotate the dealer and create a new deck
-            self.dealer = util.next_dealer(self.players, self.dealer)
             self.deck = Deck()
             # Visualize winner
             gui.visualize_winner(winner)
@@ -29,7 +28,9 @@ class Game:
             for player in self.players:
                 if player.chips <= 0:
                     gui.add_history(self.window, f"{player.name} has run out of chips")
+                    gui.remove_player(self.window, player)
                     self.players.remove(player)
+            self.dealer = util.next_dealer(self.players, self.dealer)
         #Save the history and stats to file
         players_str = ', '.join([f"{player.name}: {player.chips}" for player in self.players])
         gui.save_history_to_file(self.window, players_str)

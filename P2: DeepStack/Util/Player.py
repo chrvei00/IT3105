@@ -5,7 +5,7 @@ import Util.Game_Util as util
 import random
 
 class Player:
-    def __init__(self, name: str, type: str = "human"):
+    def __init__(self, name: str, type: str = "human", index: int = 0):
         self.name = name
         self.type = type
         self.chips = 0
@@ -14,6 +14,8 @@ class Player:
         self.active_in_hand = True
         self.is_all_in = False
         self.has_raised = False
+        self.index = index
+
     
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"
@@ -35,7 +37,7 @@ class Player:
             raise ValueError("Amount must be greater than 0")
         elif self.chips < 0:
             raise ValueError("Player does not have any chips")
-        if amount >= self.chips and self.chips > 0:
+        if amount >= self.chips:
             amount = self.chips
             self.is_all_in = True
             self.current_bet += self.chips
@@ -57,14 +59,13 @@ class Player:
         return "fold"
     
     def get_possible_actions(self, high_bet: int, blind: int):
-        actions = []
-        if high_bet - self.current_bet >= 0 and self.chips > high_bet - self.current_bet:
+        actions = ["fold"]
+        if high_bet - self.current_bet >= 0 and self.chips >= high_bet - self.current_bet:
             actions.append("call")
         if self.chips >= high_bet - self.current_bet + blind * 2 and self.has_raised == False:
             actions.append("bet")
         if self.chips > 0:
             actions.append("all-in")
-        actions.append("fold")
         return actions
 
     def reset_cards_and_bet(self):
@@ -85,6 +86,10 @@ class Player:
                 return pa[0]
             if pa.__contains__("fold"):
                 pa.remove("fold")
+            if random.random() < 0.1 and pa.__contains__("all-in"):
+                return "all-in"
+            if pa.__contains__("all-in"):
+                pa.remove("all-in")
             return random.choice(pa)
         else:
             if payout < 0.8:
@@ -93,8 +98,10 @@ class Player:
                 return "fold"
             elif payout < 1.4 and pa.__contains__("call"):
                 return "call"
-            elif payout > 1.4 and pa.__contains__("bet"):
+            elif 2.8 > payout > 1.4 and pa.__contains__("bet"):
                 return "bet"
+            elif payout >= 2.8 and pa.__contains__("all-in"):
+                return "all-in"
             else:
                 return "fold"
         
