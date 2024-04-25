@@ -4,14 +4,18 @@ from Util.Card import Deck
 from itertools import combinations
 from collections import Counter
 import Util.gui as gui
+import Util.Config as config
 
-def validate_game(Num_Human_Players, Num_AI_Players, Game_Type):
-    if Num_Human_Players < 0 or Num_AI_Players < 0:
+def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type):
+    print(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type)
+    if Num_Human_Players < 0 or Num_AI_Rollout_Players < 0 or Num_AI_Resolve_Players < 0:
         raise ValueError("Number of players must be a non-negative integer")
-    elif Num_Human_Players + Num_AI_Players < 2:
+    elif Num_Human_Players + Num_AI_Rollout_Players + Num_AI_Resolve_Players < 2:
         raise ValueError("There must be at least 2 players")
-    elif Num_Human_Players + Num_AI_Players > 6:
+    elif Num_Human_Players + Num_AI_Rollout_Players > 6:
         raise ValueError("There can be at most 10 players")
+    if Num_AI_Resolve_Players > 0 and Num_Human_Players + Num_AI_Resolve_Players + Num_AI_Rollout_Players > 2:
+        raise ValueError("There can be at most 2 players in a game with AI resolvers")
     elif Game_Type not in ["simple", "complex"]:
         raise ValueError("Game type must be either simple or complex")
 
@@ -27,14 +31,16 @@ def validate_hand(players: list, dealer: Player, deck: Deck, blind: int):
     elif deck is None:
         raise ValueError("Deck cannot be None")
 
-def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
+def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players: int, Game_Type: str, start_chips):
     players = []
     # Create human players
     for i in range(Num_Human_Players):
         players.append(Player(f"H {i}" , "human", i))
-    # Create AI players
-    for i in range(Num_AI_Players):
-        players.append(Player(f"AI {i}", "AI", i + Num_Human_Players))
+    # Create AI rollout players
+    for i in range(Num_AI_Rollout_Players):
+        players.append(Player(f"AI_roll {i}", "AI_rollout", i + Num_Human_Players))
+    for i in range(Num_AI_Resolve_Players):
+        players.append(Player(f"AI_res {i}", "AI_resolve", i + Num_Human_Players + Num_AI_Rollout_Players))
     # Give each player starting chips
     for player in players:
         player.chips = start_chips
@@ -45,7 +51,7 @@ def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
     # Create a deck
     deck = Deck()
     # Create a blind
-    blind = 10
+    blind = config.read_blind()
 
     return players, dealer, deck, blind
 
@@ -239,3 +245,13 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
 
 def get_string_representation_cards(cards: list):
     return [f"{card.get_value()}{card.get_suit()}" for card in cards]
+
+def generate_range():
+    player1_range = {}
+    player2_range = {}
+    for card1, card2 in combinations(Deck().cards, 2):
+        for action in ["fold", "call", "bet", "all-in"]:
+            #TODO: Implement a better way to generate values than random
+            player1_range[(card1, card2)] = random.random()
+            player2_range[(card1, card2)] = random.random()
+    return player1_range, player2_range

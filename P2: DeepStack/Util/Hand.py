@@ -47,16 +47,11 @@ class Hand:
     def determine_winners(self):
         winners = []
         # Determine wether there is a difference in the bets of players (meaning some players are all in)
-        print("Determining winners", self.active_players(), "line 50")
-        print(f"Checking while loop: {any(x.current_bet != self.high_bet for x in self.active_players())}", "line 51")
         while any(x.current_bet != self.high_bet for x in self.active_players()):
             # Find the player with the lowest bet
             lowest_bet = min(filter(lambda x: x.current_bet != self.high_bet, self.active_players()), key=lambda x: x.current_bet)
             # Determine winners
             winners = util.get_winner(self.active_players(), self.table)
-            for player in self.active_players():
-                print(player.name, player.cards)
-            print("Determining winners", winners, "line 57")
             # Remove the players matching the lowest bet from the active players
             self.pot -= lowest_bet.current_bet*(len(self.active_players()))
             # Reward winner and adjust pot and bets
@@ -72,7 +67,6 @@ class Hand:
             additional_winners = (util.get_winner(self.active_players(), self.table))
             for winner in additional_winners:
                 winners.append(winner)
-            print("Determining winners", additional_winners, "line 73")
             for winner in additional_winners:
                 self.reward(additional_winners, amount=self.pot)
         return winners

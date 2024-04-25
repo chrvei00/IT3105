@@ -7,7 +7,7 @@ class Node:
         self.children = []
         self.depth = depth
     
-    def add_child(self, child: Node):
+    def add_child(self, child: object):
         self.children.append(child)
         Node.depth = self.depth + 1
         child.parent = self
@@ -15,8 +15,8 @@ class Node:
 class State:
     def __init__(self, state_type: str, bets: dict, blind: int, player_stacks: dict, table: list, to_act: str, has_raised: dict = None, has_called: dict = None):
         self.type = state_type
-        self.pot = pot
         self.bets = bets
+        self.blind = blind
         self.player_stacks = player_stacks
         self.table = table
         self.to_act = to_act
@@ -25,4 +25,4 @@ class State:
         self.has_called = has_called
 
     def __repr__(self):
-        return f"State: {self.to_act} {self.pot} {self.bets} {self.player_stacks} {self.table}"
+        return f"State: {self.type}, Bets: {self.bets}, Player Stacks: {self.player_stacks}, Table: {self.table}, To Act: {self.to_act}, Stage: {self.stage}, Has Raised: {self.has_raised}, Has Called: {self.has_called}"

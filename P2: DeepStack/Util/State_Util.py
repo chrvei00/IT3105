@@ -2,7 +2,7 @@ import copy
 import Util.Node as Node
 import Util.Card as Card
 
-def gen_state(state: Node.State, object: object) -> State:
+def gen_state(state: Node.State, object: object) -> Node.State:
     """
     Generate a child state depending on the action taken.
     """
@@ -13,11 +13,13 @@ def gen_state(state: Node.State, object: object) -> State:
 
     if type(object) == str:
         action = object
-        next_player_to_act = state.player_stacks[state.to_act + 1] if state.to_act + 1 < len(state.player_ranges) else state.player_ranges[0]
-
+        # Select the only other player to act next
+        for key in state.player_stacks.keys():
+            if key != state.to_act:
+                next_player_to_act = key
         if action == "fold":
-            stacks_copy.remove(state.to_act)
-            bets_copy.remove(state.to_act)
+            del stacks_copy[state.to_act]
+            del bets_copy[state.to_act]
             state_type = "terminal"
         elif action == "all-in":
             bets_copy[state.to_act] += stacks_copy[state.to_act]
@@ -25,7 +27,7 @@ def gen_state(state: Node.State, object: object) -> State:
             # Find type of next state
             if all([stack == 0 for stack in stacks_copy]):
                 state_type = "terminal"
-            elif all([bet >= max(state.bets.values()) for bet in bets.values()]) and len(state.table < 5):
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5:
                 state_type = "chance"
             else:
                 state_type = "decision"
@@ -38,7 +40,7 @@ def gen_state(state: Node.State, object: object) -> State:
                     state_type = "chance"
                 else:
                     state_type = "terminal"
-            elif all([bet >= max(state.bets.values()) for bet in bets.values()]) and len(state.table < 5) and (has_called.get(next_player_to_act) == True or has_raised.get(next_player_to_act) == True):
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5 and (state.has_called.get(next_player_to_act) == True or state.has_raised.get(next_player_to_act) == True):
                 has_raised_copy[next_player_to_act] = False
                 has_called_copy[next_player_to_act] = False
                 has_raised_copy[state.to_act] = False
@@ -57,7 +59,7 @@ def gen_state(state: Node.State, object: object) -> State:
                     state_type = "chance"
                 else:
                     state_type = "terminal"
-            elif all([bet >= max(state.bets.values()) for bet in bets.values()]) and len(state.table < 5) and (has_called.get(next_player_to_act) == True or has_raised.get(next_player_to_act) == True):
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5 and (state.has_called.get(next_player_to_act) == True or state.has_raised.get(next_player_to_act) == True):
                 has_raised_copy[next_player_to_act] = False
                 has_called_copy[next_player_to_act] = False
                 has_raised_copy[state.to_act] = False
@@ -69,15 +71,15 @@ def gen_state(state: Node.State, object: object) -> State:
                 state_type = "decision"
 
         
-        return State(state_type, bets_copy, state.blind, stacks_copy, state.table, next_player_to_act, has_raised_copy, has_called_copy)
+        return Node.State(state_type, bets_copy, state.blind, stacks_copy, state.table, next_player_to_act, has_raised_copy, has_called_copy)
     else:
         card = object
         table_copy = copy.deepcopy(state.table)
         table_copy.append(card)
         if len(table_copy) < 5:
-            return State("decision", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+            return Node.State("decision", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
         else:
-            return State("terminal", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+            return Node.State("terminal", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
 
 def possible_actions(node: Node.Node) -> list:
     """
@@ -97,5 +99,5 @@ def possible_cards(state: Node.State) -> list:
     """
     Get all possible cards for the current state.
     """
-    deck = Card.Deck().shuffle().cards
+    deck = Card.Deck().cards
     return [card for card in deck if card not in state.table]

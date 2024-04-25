@@ -1,17 +1,17 @@
-from Util.Node import Node
+import Util.Node as Node
 import Util.State_Util as util
 
-def generate_root(state: Node.State) -> Node:
+def generate_root(state: Node.State) -> Node.Node:
     """
     Generate the root state for the search tree.
     """
-    return Node(state, depth=0)
+    return Node.Node(state=state, depth=0)
 
-def generate_child_state(state: State, object: str) -> State:
+def generate_child_state(state: Node.State, object: str) -> Node.State:
     """
     Generate a child state depending on the action taken.
     """
-    return util.gen_state(action=action[0], object=object)
+    return util.gen_state(state=state, object=object)
 
 def generate_children(node: Node.Node, end_depth: int = 10):
     """
@@ -20,11 +20,11 @@ def generate_children(node: Node.Node, end_depth: int = 10):
     depth = node.depth
     while depth + 1 < end_depth and node.children == []:
         if node.state.type == "decision":
-            for action in util.possible_actions(node.state):
-                node.add_child( Node(generate_child_state(state=node.state, object=action)) )
+            for action in util.possible_actions(node):
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=action)) )
         elif node.state.type == "chance":
             for card in util.possible_cards(node.state):
-                node.add_child( Node(generate_child_state(state=node.state, object=card)) )
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=card)) )
         elif node.state.type == "terminal":
             return
     for child in node.children:

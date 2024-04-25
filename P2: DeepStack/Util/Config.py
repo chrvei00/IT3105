@@ -8,6 +8,22 @@ def read_setup() -> bool:
     config.read('config.ini')
     return config.getboolean('setup', 'auto')
 
+def read_end_depth() -> int:
+    """
+    Read the end depth from the config file.
+    """
+    config = ConfigParser()
+    config.read('config.ini')
+    return config.getint('setup', 'end_depth')
+
+def read_rollouts() -> int:
+    """
+    Read the number of rollouts from the config file.
+    """
+    config = ConfigParser()
+    config.read('config.ini')
+    return config.getint('setup', 'rollouts')
+
 def read_simultation_size() -> int:
     """
     Read the simulation size from the config file.
@@ -25,6 +41,14 @@ def read_cheat_sheet() -> dict:
     if not config.has_section('cheat_sheet'):
         return None
     return dict(config['cheat_sheet'])
+
+def read_blind() -> int:
+    """
+    Read the blind from the config file.
+    """
+    config = ConfigParser()
+    config.read('config.ini')
+    return config.getint('setup', 'blind')
 
 def write_cheat_sheet(hand: list, opponents: int, wins: int, n: int) -> None:
     """

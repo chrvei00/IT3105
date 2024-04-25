@@ -3,6 +3,8 @@ from Util.Card import Card
 from Poker_Oracle import hole_card_rollout
 import Util.Game_Util as util
 import random
+import Resolver as res
+import Util.Node as node
 
 class Player:
     def __init__(self, name: str, type: str = "human", index: int = 0):
@@ -15,7 +17,8 @@ class Player:
         self.is_all_in = False
         self.has_raised = False
         self.index = index
-
+        if type == "AI_resolve":
+            self.player1_range, self.player2_range = util.generate_range()
     
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"
@@ -50,7 +53,7 @@ class Player:
     def get_action(self, window, high_bet: int, pot: int, table: list, players: list, blind: int):
         if self.type == "human":
             return util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
-        elif self.type == "AI-resolver":
+        elif self.type == "AI_resolve":
             return self.get_AI_Resolver_action(high_bet, pot, table, players, blind)
         else:
             util.visualize_AI(window, table, self.name, self.chips, pot, self.current_bet, high_bet)
@@ -76,7 +79,20 @@ class Player:
         self.has_raised = False
 
     def get_AI_Resolver_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
-        pass
+        # Generate the state
+        state_type = "decision"
+        bets = {}
+        player_stacks = {}
+        has_raised = {}
+        has_called = {}
+        for player in players:
+            bets[player.name] = player.current_bet
+            player_stacks[player.name] = player.chips
+            has_raised[player.name] = player.has_raised
+            has_called[player.name] = False
+        
+        state = node.State("decision", bets, blind, player_stacks, table, self.name, has_raised, has_called)
+        return res.get_action(self, state)
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
         payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet   
@@ -90,6 +106,8 @@ class Player:
                 return "all-in"
             if pa.__contains__("all-in"):
                 pa.remove("all-in")
+            if len(pa) == 0:
+                return "fold"
             return random.choice(pa)
         else:
             if payout < 0.8:

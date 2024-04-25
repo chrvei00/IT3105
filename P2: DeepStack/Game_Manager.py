@@ -4,9 +4,9 @@ import Util.Game_Util as util
 import Util.gui as gui
 
 class Game:
-    def __init__(self, window, Num_Human_Players: int, Num_AI_Rollout_Players: int, Num_AI_Resolve_Players: int=0, Game_Type: str = "simple", start_chips: int = 1000):
-        util.validate_game(Num_Human_Players, Num_AI_Rollout_Players, Game_Type)
-        self.players, self.dealer, self.deck, self.blind = util.setup_game(Num_Human_Players, Num_AI_Rollout_Players, Game_Type, start_chips)
+    def __init__(self, window, Num_Human_Players: int, Num_AI_Rollout_Players: int, Num_AI_Resolve_Players: int, Game_Type: str = "simple", start_chips: int = 1000):
+        util.validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type)
+        self.players, self.dealer, self.deck, self.blind = util.setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips)
         self.window = window
 
     def __repr__(self):
@@ -23,7 +23,7 @@ class Game:
             # Rotate the dealer and create a new deck
             self.deck = Deck()
             # Visualize winner
-            gui.visualize_winner(winner)
+            gui.visualize_winner(self.window, f"{winner} has won the hand")
             # Remove players with no chips
             prev_players = list(self.players)
             for player in self.players:

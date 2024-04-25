@@ -1,7 +1,22 @@
 import Util.resolver_util as util
 import State_Manager as sm
+import Util.Node as Node
+import Util.Config as config
 
-def resolve(State: State, player1_range: dict, player2_range: dict, end_stage: str, end_depth: int, rollouts: int):
+def get_action(player, state) -> str:
+    player1_range = player.player1_range
+    player2_range = player.player2_range
+    end_stage = "terminal"
+    end_depth = config.read_end_depth()
+    rollouts = config.read_rollouts()
+    action, updated_state, updated_player1_range, player2_range = resolve(state, player1_range, player2_range, end_stage, end_depth, rollouts)
+    player.player1_range = updated_player1_range
+    player.player2_range = player2_range
+    return action
+
+
+
+def resolve(State: Node.State, player1_range: dict, player2_range: dict, end_stage: str, end_depth: int, rollouts: int):
     root = sm.subtree_generator(State, end_stage, end_depth)
     for i in range(rollouts):
         # Subtree traversal rollout
@@ -12,9 +27,9 @@ def resolve(State: State, player1_range: dict, player2_range: dict, end_stage: s
         sigma_mean = sigma/rollouts
         action = max(sigma_mean)
         # Update range of acting player
-        player1_range = bayesian_range_updater(player1_range, action)
+        updated_player1_range = bayesian_range_updater(player1_range, action)
         # Return params
-        return action, updated_state, updated_player1_range, player2_range
+    return action, updated_state, updated_player1_range, player2_range
 
 def travese(root, player1_range, player2_range, end_stage, end_depth):
     if util.is_showdown(state):
@@ -70,12 +85,3 @@ def BayesianRangeUpdater(current_range, observed_action, strategy):
         updated_range[hand] /= normalization_factor
 
     return updated_range
-
-def update_regret():
-    pass
-
-def gen_neural_net():
-    pass
-
-def train_neural_net():
-    pass

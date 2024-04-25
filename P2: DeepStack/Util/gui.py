@@ -30,7 +30,7 @@ def create_poker_window(num_players: int = 2):
     large_font = ('Helvetica', 20)
     player_rows = [
         [
-         sg.Text(f"Player:"), sg.Text('', key=f'-NAME-{i}-', size=(5, 1)),
+         sg.Text(f"Player:"), sg.Text('', key=f'-NAME-{i}-', size=(10, 1)),
          sg.Text('Chips:'), sg.Text('', key=f'-CHIPS-{i}-', size=(5, 1)),
          sg.Text('Current Bet:'), sg.Text('', key=f'-BET-{i}-', size=(5, 1))
         ]
@@ -38,7 +38,7 @@ def create_poker_window(num_players: int = 2):
     ]
     left_layout = [
         [sg.Text('Turn: '), sg.Text('', key='-TURN-', size=(40, 1))],
-        [sg.Column(player_rows, key='-PLAYERS-', size=(500, 200), scrollable=False)],
+        [sg.Column(player_rows, key='-PLAYERS-', size=(700, 200), scrollable=False)],
         [sg.Text('Table: '), sg.Text('', key='-TABLE-', size=(40, 1))],
         [sg.Text('Your cards: '), sg.Text('', key='-CARDS-', size=(40, 1))],
         [sg.Text('', key='-INFO-', size=(50, 3))],
@@ -128,20 +128,21 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
     return act
 
 def visualize_winner(window, winner: str):
-    window['-INFO-'].update(f"{winner} has won the hand")
+    window['-INFO-'].update(winner)
     window['-TABLE-'].update('')
     window['-CARDS-'].update('')
     window['call'].update(visible=False)
     window['bet'].update(visible=False)
     window['fold'].update(visible=False)
-    custom_popup(f"{winner} has won the hand")
+    #TODO: Remove
+    return
+    custom_popup(winner)
 
 def wait_for_user_to_start_new_hand_popup(window):
     # Show a popup to wait for the user to start a new hand
+    # TODO: Remove
+    return
     custom_popup("Press OK to start a new hand")
-
-def visualize_winner(winner_str: str):
-    custom_popup(f"{winner_str}")
     
 def add_history(window, message):
     current_history = window['-HISTORY-'].get()
