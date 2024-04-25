@@ -1,26 +1,39 @@
-from Util.Search_Tree import State
-from Util.State_Util import gen_state_call, gen_state_fold, gen_state_bet, gen_state_all_in, possible_actions
+from Util.Node import Node
+import Util.State_Util as util
 
-def generate_root_state(player_ranges: dict, pot: int, current_bet: int, player_stacks: dict, table: list, history: list, to_act: str) -> State:
+def generate_root(state: Node.State) -> Node:
     """
     Generate the root state for the search tree.
     """
-    return State(player_ranges, pot, current_bet, player_stacks, table, history, to_act)
+    return Node(state, depth=0)
 
-def generate_child_state(state: State, action: tuple) -> State:
+def generate_child_state(state: State, object: str) -> State:
     """
     Generate a child state depending on the action taken.
     """
-    if action[0] not in possible_actions(state):
-        raise ValueError("Action is not possible in the current state")
+    return util.gen_state(action=action[0], object=object)
 
-    return gen_state(state, action)
-
-def generate_child_states(tree: Search_Tree, state: State) -> list:
+def generate_children(node: Node.Node, end_depth: int = 10):
     """
     Generate all child states for the search tree.
     """
-    child_states = []
-    for action in possible_actions(state):
-        child_states.append(generate_child_state(state, action))
-    return child_states
+    depth = node.depth
+    while depth + 1 < end_depth and node.children == []:
+        if node.state.type == "decision":
+            for action in util.possible_actions(node.state):
+                node.add_child( Node(generate_child_state(state=node.state, object=action)) )
+        elif node.state.type == "chance":
+            for card in util.possible_cards(node.state):
+                node.add_child( Node(generate_child_state(state=node.state, object=card)) )
+        elif node.state.type == "terminal":
+            return
+    for child in node.children:
+        generate_children(child, end_depth=end_depth)
+
+def subtree_generator(state: Node.State, end_stage: str, end_depth: int) -> Node:
+    """
+    Generate the subtree for the search tree.
+    """
+    root = generate_root(state=state)
+    generate_children(root, end_depth)
+    return root
