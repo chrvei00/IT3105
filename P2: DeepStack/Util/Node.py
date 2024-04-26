@@ -1,15 +1,19 @@
 class Node:
-    def __init__(self, state: object, parent: object = None, action: str = None, player_ranges: dict = None, depth: int = 0):
+    def __init__(self, state: object, parent: object = None, action: str = None, player_ranges: dict = None, depth: int = 0, regret_sum: dict = None, strategy_sum: dict = None):
         self.state = state
         self.parent = parent
         self.action = action
         self.player_ranges = player_ranges
         self.children = []
         self.depth = depth
+        self.player1_value = 0
+        self.player2_value = 0
+        self.regret_sum = regret_sum
+        self.strategy_sum = strategy_sum
     
     def add_child(self, child: object):
         self.children.append(child)
-        Node.depth = self.depth + 1
+        child.depth = self.depth + 1
         child.parent = self
 
 class State:

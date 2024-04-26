@@ -74,3 +74,12 @@ def format_hand(hand: list, opponents: int = 1) -> str:
     else:
         suited = "offsuit"
     return f"{format_hand}-{suited}-{opponents+1}".lower()
+
+def tuple_hole_pair(pair: list) -> tuple:
+    """
+    Sort a hand by the value of the cards.
+    """
+    pair.sort(key=lambda x: x.get_real_value(), reverse=True)
+    pair.sort(key=lambda x: x.get_suit())
+    return (pair[0], pair[1])
+    

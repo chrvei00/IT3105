@@ -1,4 +1,3 @@
-import inquirer
 from Util.Card import Card
 from Poker_Oracle import hole_card_rollout
 import Util.Game_Util as util

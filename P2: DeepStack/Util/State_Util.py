@@ -1,6 +1,7 @@
 import copy
 import Util.Node as Node
 import Util.Card as Card
+import Util.Config as config
 
 def gen_state(state: Node.State, object: object) -> Node.State:
     """
@@ -95,9 +96,35 @@ def possible_actions(node: Node.Node) -> list:
         actions.append("bet")
     return actions
 
-def possible_cards(state: Node.State) -> list:
+def possible_cards(state: Node.State, max: int) -> list:
     """
     Get all possible cards for the current state.
     """
-    deck = Card.Deck().cards
-    return [card for card in deck if card not in state.table]
+    deck = Card.Deck()
+    deck.shuffle()
+    cards = deck._deal(max)
+    return [card for card in cards if card not in state.table]
+
+def possible_hole_pairs(state: Node.State=None, max: int=52) -> list:
+    """
+    Get all possible hole card pairs for the current state.
+    """
+    hole_pairs = []
+    deck = Card.Deck()
+    for i in range(max):
+        for j in range(i+1, max):
+            hole_pairs.append([deck.cards[i], deck.cards[j]])
+    return hole_pairs
+
+def gen_hole_pair_matrix() -> dict:
+    """
+    Generate the regret sum for the current node.
+    """
+    actions = ["fold", "call", "bet", "all-in"]
+    matrix = {}
+    for pair in possible_hole_pairs():
+        tup_pair = config.tuple_hole_pair(pair)
+        matrix[tup_pair] = {}
+        for action in actions:
+            matrix[tup_pair][action] = 0
+    return matrix
