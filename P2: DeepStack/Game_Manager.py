@@ -41,4 +41,4 @@ class Game:
         players_str = ', '.join([f"{player.name}: {player.chips}" for player in self.players])
         gui.save_history_to_file(self.window, players_str)
         # Display the winner
-        gui.visualize_winner(f"\nPlayer {self.players[0]} has won the game\n")
+        gui.visualize_winner(self.window, f"\nPlayer {self.players[0]} has won the game\n")

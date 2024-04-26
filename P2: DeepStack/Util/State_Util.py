@@ -123,8 +123,7 @@ def gen_hole_pair_matrix() -> dict:
     actions = ["fold", "call", "bet", "all-in"]
     matrix = {}
     for pair in possible_hole_pairs():
-        tup_pair = config.tuple_hole_pair(pair)
-        matrix[tup_pair] = {}
+        matrix[config.format_hole_pair(pair)] = {}
         for action in actions:
-            matrix[tup_pair][action] = 0
+            matrix[config.format_hole_pair(pair)][action] = 0
     return matrix

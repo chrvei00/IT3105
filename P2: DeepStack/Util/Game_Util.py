@@ -7,7 +7,6 @@ import Util.gui as gui
 import Util.Config as config
 
 def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type):
-    print(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type)
     if Num_Human_Players < 0 or Num_AI_Rollout_Players < 0 or Num_AI_Resolve_Players < 0:
         raise ValueError("Number of players must be a non-negative integer")
     elif Num_Human_Players + Num_AI_Rollout_Players + Num_AI_Resolve_Players < 2:

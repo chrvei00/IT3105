@@ -10,28 +10,28 @@ def get_action(player, state) -> str:
     end_stage = "terminal"
     end_depth = config.read_end_depth()
     rollouts = config.read_rollouts()
-    action, updated_player1_range, player2_range = resolve(state, player1_range, player2_range, end_stage, end_depth, rollouts)
+    action, updated_player1_range, player2_range = resolve(state, player1_range, player2_range, end_stage, end_depth, rollouts, player.cards)
     player.player1_range = updated_player1_range
     player.player2_range = player2_range
     return action
 
 
 
-def resolve(State: Node.State, player1_range: dict, player2_range: dict, end_stage: str, end_depth: int, rollouts: int):
+def resolve(State: Node.State, player1_range: dict, player2_range: dict, end_stage: str, end_depth: int, rollouts: int, cards: list):
     root = sm.subtree_generator(State, end_stage, end_depth, rollouts)
     for i in range(rollouts):
         # Subtree traversal rollout
         player1_value, player2_value = traverse(root, player1_range, player2_range, end_stage, end_depth)
         # Update strategy
         strategy = update_strategy(root)
-        # Generate average strategy
-        # TODO: Vi har kommet hit men ikke lenger. Jeg må finne ut hvordan man henter ut en action fra en strategi
-        action = max(strategy.values(), key=lambda x: x["fold"])
-        #TODO: We need to get only one action from the strategy
-        print(action)
+        actions = strategy[config.format_hole_pair(cards)]
+        action = max(actions, key=actions.get)
         # Update range of acting player
         updated_player1_range = bayesian_range_updater(player1_range, action, strategy)
         # Return params
+    actions = strategy[config.format_hole_pair(cards)]
+    action = max(actions, key=actions.get)
+    # input(f"Action: {action}\nPress Enter to continue...")
     return action, updated_player1_range, player2_range
 
 def traverse(node, player1_range, player2_range, end_stage, end_depth):
@@ -55,19 +55,17 @@ def update_strategy(node):
         update_strategy(node)
     if state.type == "decision":
         for pair in su.possible_hole_pairs(state.table):
-            tup_pair = config.tuple_hole_pair(pair)
             for action in su.possible_actions(node):
                 try:
-                    regret = max(0, node.regret_sum[tup_pair][action] + 0) #TODO add utility of action - node.player1_value)
-                    node.regret_sum[pair][action] += regret
+                    regret = max(0, node.regret_sum[config.format_hole_pair(pair)][action] + 0) #TODO add utility of action - node.player1_value)
+                    node.regret_sum[config.format_hole_pair(pair)][action] += regret
                 except KeyError:
                     pass
                     # print("KeyError: ", pair, action)
         for pair in su.possible_hole_pairs(state.table):
-            tup_pair = config.tuple_hole_pair(pair)
             for action in su.possible_actions(node):
                 try:
-                    node.strategy_sum[tup_pair][action] += node.regret_sum[tuple(pair)][action]
+                    node.strategy_sum[config.format_hole_pair(pair)][action] += node.regret_sum[tuple(pair)][action]
                 except KeyError:
                     pass
                     # print("KeyError: ", pair, action)
