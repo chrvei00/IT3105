@@ -17,7 +17,7 @@ class Player:
         self.has_raised = False
         self.index = index
         if type == "AI_resolve":
-            self.player1_range, self.player2_range = util.generate_range()
+            self.player_range, self.opponent_range = util.generate_ranges()
     
     def __repr__(self):
         return f"Player: {self.name} C: {self.chips}"

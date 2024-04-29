@@ -1,6 +1,7 @@
 import copy
 import Util.Player
 from Util.Oracle_Util import simulate
+import Util.Game_Util as game_util
 from Util.Config import read_simultation_size, read_cheat_sheet, write_cheat_sheet, format_hand
 
 
@@ -44,3 +45,22 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
     if save:
         write_cheat_sheet(hand, opponents, wins, n)
     return wins / n
+
+def simulate_table(init_deck, init_table: list, player_hand: list, opponent: list) -> float:
+    """
+    Simulate a table with a player and an opponent.
+    """
+    # Create a copy of the table and deck
+    table = copy.deepcopy(init_table)
+    deck = copy.deepcopy(init_deck)
+    # Simulate the showdown
+    deck.shuffle()
+    if len(opponent) < 2:
+        cards = deck.deal_card(2 - len(opponent))
+        for card in cards:
+            opponent.append(card)
+    if len(table) < 5:
+        cards = deck.deal_card(5 - len(table))
+        for card in cards:
+            table.append(card)
+    return game_util.compare_two_hands(player_hand, opponent, table)

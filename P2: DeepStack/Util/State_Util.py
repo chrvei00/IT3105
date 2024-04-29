@@ -110,13 +110,15 @@ def possible_hole_pairs(state: Node.State=None, max: int=52) -> list:
     Get all possible hole card pairs for the current state.
     """
     hole_pairs = []
-    deck = Card.Deck()
-    for i in range(max):
-        for j in range(i+1, max):
-            hole_pairs.append([deck.cards[i], deck.cards[j]])
+    for card1 in Card.Card.get_all_cards():
+        for card2 in Card.Card.get_all_cards():
+            if not (card1.get_real_value() == card2.get_real_value() and card1.get_suit() == card2.get_suit()):
+                # Sort the hole pair, so the highest card is first
+                hole_pair_sorted = sorted([card1, card2], key=lambda card: card.get_real_value(), reverse=True)
+                hole_pairs.append(hole_pair_sorted)
     return hole_pairs
 
-def gen_hole_pair_matrix() -> dict:
+def gen_hole_pair_matrix(init_value: float = 0) -> dict:
     """
     Generate the regret sum for the current node.
     """
@@ -125,5 +127,12 @@ def gen_hole_pair_matrix() -> dict:
     for pair in possible_hole_pairs():
         matrix[config.format_hole_pair(pair)] = {}
         for action in actions:
-            matrix[config.format_hole_pair(pair)][action] = 0
+            matrix[config.format_hole_pair(pair)][action] = init_value
+    return matrix
+
+def gen_range() -> dict:
+    matrix = {}
+    num_hole_pairs = len(possible_hole_pairs())
+    for pair in possible_hole_pairs():
+        matrix[config.format_hole_pair(pair)] = 1/num_hole_pairs
     return matrix

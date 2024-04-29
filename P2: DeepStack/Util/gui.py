@@ -3,6 +3,7 @@ import Util.Game_Util as util
 import datetime
 import os
 import threading
+import Util.Config as config
 
 def create_game_setup_window():
     layout = [
@@ -134,15 +135,12 @@ def visualize_winner(window, winner: str):
     window['call'].update(visible=False)
     window['bet'].update(visible=False)
     window['fold'].update(visible=False)
-    #TODO: Remove
-    return
-    custom_popup(winner)
-
+    if(config.read_monitor()):
+        custom_popup(winner)
 def wait_for_user_to_start_new_hand_popup(window):
     # Show a popup to wait for the user to start a new hand
-    # TODO: Remove
-    return
-    custom_popup("Press OK to start a new hand")
+    if(config.read_monitor()):
+        custom_popup("Press OK to start a new hand")
     
 def add_history(window, message):
     current_history = window['-HISTORY-'].get()

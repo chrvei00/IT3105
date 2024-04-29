@@ -1,74 +1,55 @@
 import Util.resolver_util as util
 import Util.State_Util as su
+import Util.Game_Util as gu
 import State_Manager as sm
 import Util.Node as Node
 import Util.Config as config
 
 def get_action(player, state) -> str:
-    player1_range = player.player1_range
-    player2_range = player.player2_range
+    player_range = player.player_range
+    opponent_range = player.opponent_range
     end_stage = "terminal"
-    end_depth = config.read_end_depth()
-    rollouts = config.read_rollouts()
-    action, updated_player1_range, player2_range = resolve(state, player1_range, player2_range, end_stage, end_depth, rollouts, player.cards)
-    player.player1_range = updated_player1_range
-    player.player2_range = player2_range
+    action, player.player_range, player.opponent_range = resolve(state, player_range, opponent_range, end_stage, config.read_end_depth(), config.read_rollouts(), player.cards)
     return action
 
 
-
-def resolve(State: Node.State, player1_range: dict, player2_range: dict, end_stage: str, end_depth: int, rollouts: int, cards: list):
+def resolve(State: Node.State, player_range: dict, opponent_range: dict, end_stage: str, end_depth: int, rollouts: int, cards: list):
     root = sm.subtree_generator(State, end_stage, end_depth, rollouts)
+    strategy = []
     for i in range(rollouts):
-        # Subtree traversal rollout
-        player1_value, player2_value = traverse(root, player1_range, player2_range, end_stage, end_depth)
-        # Update strategy
-        strategy = update_strategy(root)
-        actions = strategy[config.format_hole_pair(cards)]
-        action = max(actions, key=actions.get)
-        # Update range of acting player
-        updated_player1_range = bayesian_range_updater(player1_range, action, strategy)
-        # Return params
-    actions = strategy[config.format_hole_pair(cards)]
-    action = max(actions, key=actions.get)
+        player_value, opponent_value = traverse(root, player_range, opponent_range, end_stage, end_depth)
+        strategy.append(update_strategy(root))
+    average_strategy = util.average_strategy(strategy)
+    action = max(average_strategy[config.format_hole_pair(cards)], key=average_strategy[config.format_hole_pair(cards)].get)
+    updated_player_range = bayesian_range_updater(player_range, action, average_strategy)
     # input(f"Action: {action}\nPress Enter to continue...")
-    return action, updated_player1_range, player2_range
+    return action, updated_player_range, opponent_range
 
-def traverse(node, player1_range, player2_range, end_stage, end_depth):
-    if node.depth == end_depth and node.state.type == end_stage:
-        return neural_network(node.state, player1_range, player2_range)
-    elif node.state.type == end_stage:
-        # TODO match range with table
-        return 0, 0
-    else:
-        for i in range(len(node.children)):
-            # Traverse children
-            player1_value, player2_value = traverse(node.children[i], player1_range, player2_range, end_stage, end_depth)
-            # Update values
-            node.children[i].player1_value = player1_value
-            node.children[i].player2_value = player2_value
-        return node.player1_value, node.player2_value
+def traverse(node, player_range, opponent_range, end_stage, end_depth):
+    if node.depth == end_depth or node.state.type == end_stage:
+        return neural_network(node.state, player_range, opponent_range)
+    elif node.state.type == "decision":
+        for child in node.children:
+            node.player_range = bayesian_range_updater(player_range, child.action, node.strategy_sum)
+            node.player_value, node.opponent_value = traverse(child, player_range, opponent_range, end_stage, end_depth)
+    return node.player_value, node.opponent_value
 
 def update_strategy(node):
     state = node.state
+    if state.type != "decision":
+        return
     for node in node.children:
         update_strategy(node)
-    if state.type == "decision":
-        for pair in su.possible_hole_pairs(state.table):
-            for action in su.possible_actions(node):
-                try:
-                    regret = max(0, node.regret_sum[config.format_hole_pair(pair)][action] + 0) #TODO add utility of action - node.player1_value)
-                    node.regret_sum[config.format_hole_pair(pair)][action] += regret
-                except KeyError:
-                    pass
-                    # print("KeyError: ", pair, action)
-        for pair in su.possible_hole_pairs(state.table):
-            for action in su.possible_actions(node):
-                try:
-                    node.strategy_sum[config.format_hole_pair(pair)][action] += node.regret_sum[tuple(pair)][action]
-                except KeyError:
-                    pass
-                    # print("KeyError: ", pair, action)
+    actions = ["fold", "call", "bet", "all-in"]
+    for pair in node.regret_sum:
+        for action in actions:
+            regret_util = util.expected_payoff(pair, node.action, state.table, sum(node.state.bets.values())) - util.get_best_alternative_payoff(pair, node.state.table, sum(node.state.bets.values()))
+            print(f"Regret Utility: {-regret_util}")
+            regret = max(0, -regret_util)
+            node.regret_sum[pair][action] += regret
+    for pair in node.strategy_sum:
+        for action in actions:
+                node.strategy_sum[pair][action] += node.regret_sum[pair][action]
     return node.strategy_sum
 
 def bayesian_range_updater(current_range, observed_action, strategy):
@@ -87,16 +68,36 @@ def bayesian_range_updater(current_range, observed_action, strategy):
         try:
             likelihood = strategy[hand][observed_action]
             prior = current_range[hand]
-            posterior = (likelihood * prior) / total_probability_of_action
+            if total_probability_of_action == 0:
+                posterior = 0
+            else:
+                posterior = (likelihood * prior) / total_probability_of_action
             updated_range[hand] = posterior
         except KeyError:
             pass
     # Normalize the updated range to ensure it sums to 1
     normalization_factor = sum(updated_range.values())
     for hand in updated_range:
-        updated_range[hand] /= normalization_factor
+        if normalization_factor == 0:
+            updated_range[hand] = 0
+        else:
+            updated_range[hand] /= normalization_factor
 
     return updated_range
 
-def neural_network(state, player1_range, player2_range):
-    return 0, 0
+def neural_network(state, player_range, opponent_range):
+    # TODO: implement neural network
+    return heuristic_evaluation(state, player_range, opponent_range)
+
+def heuristic_evaluation(state, player_range, opponent_range) -> dict:
+    # Initialize valuevetors
+    player_value = su.gen_range()
+    opponent_value = su.gen_range()
+    # Calculate the value of the player's hand
+    for hand in player_range:
+        player_value[hand] = gu.get_utility(hand1=util.turn_hand_string_to_list(hand), table=state.table)
+    # Calculate the value of the opponent's hand
+    for hand in opponent_range:
+        opponent_value[hand] = -gu.get_utility(hand1=util.turn_hand_string_to_list(hand), table=state.table)
+    
+    return player_value, opponent_value

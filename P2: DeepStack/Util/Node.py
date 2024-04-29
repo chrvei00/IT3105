@@ -1,20 +1,21 @@
 class Node:
-    def __init__(self, state: object, parent: object = None, action: str = None, player_ranges: dict = None, depth: int = 0, regret_sum: dict = None, strategy_sum: dict = None):
+    def __init__(self, state: object, parent: object = None, action: str = None, player_range: dict = None, opponent_range: dict = None, depth: int = 0, regret_sum: dict = None, strategy_sum: dict = None, player_value: dict = None, opponent_value: dict = None):
         self.state = state
         self.parent = parent
-        self.action = action
-        self.player_ranges = player_ranges
+        self.player_range = player_range
+        self.opponent_range = opponent_range
         self.children = []
         self.depth = depth
-        self.player1_value = 0
-        self.player2_value = 0
+        self.action = action
         self.regret_sum = regret_sum
         self.strategy_sum = strategy_sum
+        self.player_value = player_value
+        self.opponent_value = opponent_value
     
     def add_child(self, child: object):
         self.children.append(child)
         child.depth = self.depth + 1
-        child.parent = self
+        child.parent = self        
 
 class State:
     def __init__(self, state_type: str, bets: dict, blind: int, player_stacks: dict, table: list, to_act: str, has_raised: dict = None, has_called: dict = None):

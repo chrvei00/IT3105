@@ -50,6 +50,14 @@ def read_blind() -> int:
     config.read('config.ini')
     return config.getint('setup', 'blind')
 
+def read_monitor() -> bool:
+    """
+    Read the monitor from the config file.
+    """
+    config = ConfigParser()
+    config.read('config.ini')
+    return config.getboolean('setup', 'monitor')
+
 def write_cheat_sheet(hand: list, opponents: int, wins: int, n: int) -> None:
     """
     Write the win rate of a hand to the cheat sheet.
@@ -81,6 +89,6 @@ def format_hole_pair(pair: list) -> tuple:
     """
     pair.sort(key=lambda x: x.get_real_value(), reverse=True)
     pair.sort(key=lambda x: x.get_suit())
-    string_pair = f"{pair[0].__repr__}{pair[1].__repr__}"
+    string_pair = f"{pair[0].__repr__()}{pair[1].__repr__()}"
     return string_pair
     

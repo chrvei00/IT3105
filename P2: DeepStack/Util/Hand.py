@@ -2,6 +2,7 @@ from Util.Card import Deck
 import Util.Game_Util as util
 from Util.Player import Player
 import Util.gui as gui
+from copy import deepcopy
 
 class Hand:
     def __init__(self, window, players: list, dealer: Player, deck: Deck, blind: int):
@@ -11,7 +12,8 @@ class Hand:
         self.initial_players = list(players)
         self.players = list(players)
         self.players = util.rotate(self.players, dealer)
-        self.deck = deck
+        #Create copy of deck
+        self.deck = deepcopy(deck)
         self.blind = blind
         self.pot = 0
         self.high_bet = 0
@@ -67,8 +69,7 @@ class Hand:
             additional_winners = (util.get_winner(self.active_players(), self.table))
             for winner in additional_winners:
                 winners.append(winner)
-            for winner in additional_winners:
-                self.reward(additional_winners, amount=self.pot)
+            self.reward(additional_winners, amount=self.pot)
         return winners
 
     def deal_cards(self):

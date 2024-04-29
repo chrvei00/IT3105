@@ -5,6 +5,8 @@ from itertools import combinations
 from collections import Counter
 import Util.gui as gui
 import Util.Config as config
+import Util.State_Util as state_util
+import Poker_Oracle as oracle
 
 def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type):
     if Num_Human_Players < 0 or Num_AI_Rollout_Players < 0 or Num_AI_Resolve_Players < 0:
@@ -79,7 +81,6 @@ def skip_player_actions(players: list):
         return True
 
 def end_action_round(players: list):
-    #TODO circle back to this, you have to fix the determination of the winner first
     if len(players) == 1:
         return True
     if skip_player_actions(players):
@@ -187,7 +188,7 @@ RANKS = {
 
 def evaluate_hand(hand):
     """Evaluates a hand and returns its rank and the key cards for comparison."""
-    values = sorted([card.get_real_value() for card in hand], reverse=True)
+    values = sorted([int(card.get_real_value()) for card in hand], reverse=True)
     suits = [card.suit for card in hand]
     value_counts = Counter(values)
     is_flush = len(set(suits)) == 1
@@ -245,12 +246,20 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
 def get_string_representation_cards(cards: list):
     return [f"{card.get_value()}{card.get_suit()}" for card in cards]
 
-def generate_range():
-    player1_range = {}
-    player2_range = {}
-    for card1, card2 in combinations(Deck().cards, 2):
-        for action in ["fold", "call", "bet", "all-in"]:
-            #TODO: Implement a better way to generate values than random
-            player1_range[(card1, card2)] = random.random()
-            player2_range[(card1, card2)] = random.random()
-    return player1_range, player2_range
+def generate_ranges():
+    return state_util.gen_range(), state_util.gen_range()
+
+def get_utility(hand1: list, hand2: list = None, table: list = None):
+    deck = Deck()
+    if table is None:
+        table = []
+    if hand2 is None:
+        hand2 = []
+    deck.cards = [card for card in deck.cards if card not in hand1 + hand2 + table]
+    wins = 0
+    for i in range(config.read_simultation_size()):
+        if oracle.simulate_table(deck, table, hand1, hand2):
+            wins += 1
+        else:
+            wins -= 1
+    return wins / config.read_simultation_size()
