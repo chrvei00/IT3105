@@ -86,13 +86,14 @@ def possible_actions(node: Node.Node) -> list:
     """
     Get all possible actions for the current state.
     """
+    allowed_actions = config.get_actions()
     state = node.state
     actions = ["fold"]
-    if state.player_stacks.get(state.to_act) > 0:
+    if state.player_stacks.get(state.to_act) > 0 and "all-in" in allowed_actions:
         actions.append("all-in")
-    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act):
+    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act) and "call" in allowed_actions:
         actions.append("call")
-    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act) + state.blind * 2 and state.has_raised[state.to_act] == False:
+    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act) + state.blind * 2 and state.has_raised[state.to_act] == False and "bet" in allowed_actions:
         actions.append("bet")
     return actions
 
@@ -122,7 +123,7 @@ def gen_hole_pair_matrix(init_value: float = 0) -> dict:
     """
     Generate the regret sum for the current node.
     """
-    actions = ["fold", "call", "bet", "all-in"]
+    actions = config.get_actions()
     matrix = {}
     for pair in possible_hole_pairs():
         matrix[config.format_hole_pair(pair)] = {}

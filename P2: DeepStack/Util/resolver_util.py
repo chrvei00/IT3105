@@ -67,7 +67,7 @@ def average_strategy(strategy: list) -> dict:
     """
     Compute the average strategy from a list of strategies.
     """
-    actions = ["fold", "call", "bet", "all-in"]
+    actions = config.get_actions()
     average = state_util.gen_hole_pair_matrix()
     for strat in strategy:
         for pair in strat:

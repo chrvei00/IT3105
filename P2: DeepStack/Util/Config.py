@@ -99,4 +99,6 @@ def format_hole_pair(pair: list) -> tuple:
     pair.sort(key=lambda x: x.get_suit())
     string_pair = f"{pair[0].__repr__()}{pair[1].__repr__()}"
     return string_pair
-    
+
+def get_actions() -> list:
+    return ["fold", "call", "bet"]

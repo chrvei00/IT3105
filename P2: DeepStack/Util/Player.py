@@ -8,6 +8,7 @@ import Util.gui as gui
 import threading
 import time
 import copy
+import Util.Config as config
 
 class Player:
     def __init__(self, name: str, type: str = "human", index: int = 0):
@@ -77,12 +78,13 @@ class Player:
         return "fold"
     
     def get_possible_actions(self, high_bet: int, blind: int):
+        allowed_actions = config.get_actions()
         actions = ["fold"]
-        if high_bet - self.current_bet >= 0 and self.chips >= high_bet - self.current_bet:
+        if high_bet - self.current_bet >= 0 and self.chips >= high_bet - self.current_bet and "call" in allowed_actions:
             actions.append("call")
-        if self.chips >= high_bet - self.current_bet + blind * 2 and self.has_raised == False:
+        if self.chips >= high_bet - self.current_bet + blind * 2 and self.has_raised == False and "bet" in allowed_actions:
             actions.append("bet")
-        if self.chips > 0:
+        if self.chips > 0 and "all-in" in allowed_actions:
             actions.append("all-in")
         return actions
 

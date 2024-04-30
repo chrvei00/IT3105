@@ -102,7 +102,7 @@ def visualize_human(window, table: list, cards: list, name: str, chips: int, pot
     window['-TABLE-'].update(table_str)
     window['-CARDS-'].update(cards_str)
     # Decide which buttons to show depending on the possible actions
-    for action in ['fold', 'call', 'bet', 'all-in']:
+    for action in config.get_actions():
         window[action].update(visible=True)
     # Wait for the user to press a button
     while True:

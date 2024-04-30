@@ -41,14 +41,13 @@ def update_strategy(node):
         return
     for node in node.children:
         update_strategy(node)
-    actions = ["fold", "call", "bet", "all-in"]
     for pair in node.regret_sum:
-        for action in actions:
+        for action in config.get_actions():
             regret_util = util.expected_payoff(pair, node.action, state.table, sum(node.state.bets.values())) - util.get_best_alternative_payoff(pair, node.state.table, sum(node.state.bets.values()))
             regret = max(0, -regret_util)
             node.regret_sum[pair][action] += regret
     for pair in node.strategy_sum:
-        for action in actions:
+        for action in config.get_actions():
                 node.strategy_sum[pair][action] += node.regret_sum[pair][action]
     return node.strategy_sum
 
