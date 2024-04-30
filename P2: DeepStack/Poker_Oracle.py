@@ -1,15 +1,15 @@
 import copy
 import Util.Player
-from Util.Oracle_Util import simulate
+import Util.Oracle_Util as oracle_util
 import Util.Game_Util as game_util
-from Util.Config import read_simultation_size, read_cheat_sheet, write_cheat_sheet, format_hand
-
+import Util.Config as config
+import Util.Card as Card
 
 def cheat_sheet() -> dict:
     """
     Return a dictionary of the optimal strategies for each state of the game.
     """
-    return read_cheat_sheet()
+    return config.read_cheat_sheet()
 
 def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: object = None, cache: bool=True, save: bool=True) -> float:
     """
@@ -17,14 +17,13 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
     """
     # Check if rollout already performed
     if cache:
-        wp = read_cheat_sheet().get(format_hand(hand))
+        wp = config.read_cheat_sheet().get(config.format_hand(hand))
         if wp is not None:
             return wp
-    n = read_simultation_size()
+    n = config.read_simultation_size()
     # Create a deck
     if init_deck is None:
-        from Util.Card import Deck
-        init_deck = Deck()
+        init_deck = Card.Deck()
         for card in hand + init_table:
             if card in init_deck.cards:
                 init_deck.cards.remove(card)
@@ -39,11 +38,11 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
         table = copy.deepcopy(init_table)
         deck = copy.deepcopy(init_deck)
         # Simulate the showdown
-        if simulate(deck, table, player, opponents):
+        if oracle_util.simulate(deck, table, player, opponents):
             wins += 1
     # Return the utility matrix
     if save:
-        write_cheat_sheet(hand, opponents, wins, n)
+        config.write_cheat_sheet(hand, opponents, wins, n)
     return wins / n
 
 def simulate_table(init_deck, init_table: list, player_hand: list, opponent: list) -> float:

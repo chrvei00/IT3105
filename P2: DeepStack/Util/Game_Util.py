@@ -1,8 +1,8 @@
 import random
-from Util.Player import Player
-from Util.Card import Deck
-from itertools import combinations
-from collections import Counter
+import Util.Player as Player
+import Util.Card as Card
+import itertools
+import collections
 import Util.gui as gui
 import Util.Config as config
 import Util.State_Util as state_util
@@ -20,7 +20,7 @@ def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Play
     elif Game_Type not in ["simple", "complex"]:
         raise ValueError("Game type must be either simple or complex")
 
-def validate_hand(players: list, dealer: Player, deck: Deck, blind: int):
+def validate_hand(players: list, dealer: Player, deck: Card.Deck, blind: int):
     if len(players) < 2:
         raise ValueError("There must be at least 2 players")
     elif len(players) > 10:
@@ -36,12 +36,12 @@ def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players
     players = []
     # Create human players
     for i in range(Num_Human_Players):
-        players.append(Player(f"H {i}" , "human", i))
+        players.append(Player.Player(f"H {i}" , "human", i))
     # Create AI rollout players
     for i in range(Num_AI_Rollout_Players):
-        players.append(Player(f"AI_roll {i}", "AI_rollout", i + Num_Human_Players))
+        players.append(Player.Player(f"AI_roll {i}", "AI_rollout", i + Num_Human_Players))
     for i in range(Num_AI_Resolve_Players):
-        players.append(Player(f"AI_res {i}", "AI_resolve", i + Num_Human_Players + Num_AI_Rollout_Players))
+        players.append(Player.Player(f"AI_res {i}", "AI_resolve", i + Num_Human_Players + Num_AI_Rollout_Players))
     # Give each player starting chips
     for player in players:
         player.chips = start_chips
@@ -50,7 +50,7 @@ def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players
     # Shuffle the players
     random.shuffle(players)
     # Create a deck
-    deck = Deck()
+    deck = Card.Deck()
     # Create a blind
     blind = config.read_blind()
 
@@ -107,7 +107,7 @@ def adjust_hand_params(players: list, pot: int):
             non_all_in_players[0].current_bet = high_bet_excluded_non_all_in
     return pot
 
-def rotate(players: list, dealer: Player):
+def rotate(players: list, dealer: Player.Player):
     while players[-1] != dealer:
         players.append(players.pop(0))
     return players
@@ -146,7 +146,7 @@ def get_winner(players: list, table: list):
 def best_hand_from_seven(cards):
     """Given seven cards, returns the best five-card hand."""
     best_rank = ("High Card", [0])
-    for combo in combinations(cards, 5):
+    for combo in itertools.combinations(cards, 5):
         rank, key_cards = evaluate_hand(combo)
         if RANKS[rank] > RANKS[best_rank[0]] or (RANKS[rank] == RANKS[best_rank[0]] and key_cards > best_rank[1]):
             best_rank = (rank, key_cards)
@@ -190,7 +190,7 @@ def evaluate_hand(hand):
     """Evaluates a hand and returns its rank and the key cards for comparison."""
     values = sorted([int(card.get_real_value()) for card in hand], reverse=True)
     suits = [card.suit for card in hand]
-    value_counts = Counter(values)
+    value_counts = collections.Counter(values)
     is_flush = len(set(suits)) == 1
     is_straight = all([values[i] - values[i+1] == 1 for i in range(len(values)-1)]) or values == [14, 5, 4, 3, 2, 1]
 
@@ -250,7 +250,7 @@ def generate_ranges():
     return state_util.gen_range(), state_util.gen_range()
 
 def get_utility(hand1: list, hand2: list = None, table: list = None):
-    deck = Deck()
+    deck = Card.Deck()
     if table is None:
         table = []
     if hand2 is None:
@@ -263,3 +263,6 @@ def get_utility(hand1: list, hand2: list = None, table: list = None):
         else:
             wins -= 1
     return wins / config.read_simultation_size()
+
+def get_utility_potrelative(hand: list, table: list, pot: float):
+    return oracle.hole_card_rollout(table, hand, 1, cache=False, save=False)*pot

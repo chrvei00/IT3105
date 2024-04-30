@@ -1,5 +1,5 @@
-from Util.Hand import Hand
-from Util.Card import Deck
+import Util.Hand as Hand
+import Util.Card as Card
 import Util.Game_Util as util
 import Util.gui as gui
 
@@ -18,10 +18,10 @@ class Game:
             # Display the players and their chips
             gui.visualize_players(self.window, self.players)
             # Play a hand
-            hand = Hand(self.window, self.players, self.dealer, self.deck, self.blind)
+            hand = Hand.Hand(self.window, self.players, self.dealer, self.deck, self.blind)
             winner = hand.play()
             # Rotate the dealer and create a new deck
-            self.deck = Deck()
+            self.deck = Card.Deck()
             # Visualize winner
             gui.visualize_winner(self.window, f"{winner} has won the hand")
             # Remove players with no chips

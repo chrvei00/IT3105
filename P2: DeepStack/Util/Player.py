@@ -1,6 +1,6 @@
-from Util.Card import Card
-from Poker_Oracle import hole_card_rollout
+import Poker_Oracle as oracle
 import Util.Game_Util as util
+import Util.Card as Card
 import random
 import Resolver as res
 import Util.Node as node
@@ -25,7 +25,7 @@ class Player:
     def get_cards(self) -> list:
         return self.cards
 
-    def deal_card(self, card: Card):
+    def deal_card(self, card: Card.Card):
         if len(self.cards) < 2:
             self.cards.append(card)
         else:
@@ -94,7 +94,7 @@ class Player:
         return res.get_action(self, state)
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
-        payout = (hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet   
+        payout = (oracle.hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet   
         pa = self.get_possible_actions(high_bet, blind)     
         if random.random() < 0.15:
             if len(pa) == 1:

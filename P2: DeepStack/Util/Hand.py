@@ -1,11 +1,11 @@
-from Util.Card import Deck
+import Util.Card as Card
 import Util.Game_Util as util
-from Util.Player import Player
+import Util.Player as Player
 import Util.gui as gui
-from copy import deepcopy
+import copy
 
 class Hand:
-    def __init__(self, window, players: list, dealer: Player, deck: Deck, blind: int):
+    def __init__(self, window, players: list, dealer: Player.Player, deck: Card.Deck, blind: int):
         util.validate_hand(players, dealer, deck, blind)
         self.window = window
         self.dealer = dealer
@@ -13,7 +13,7 @@ class Hand:
         self.players = list(players)
         self.players = util.rotate(self.players, dealer)
         #Create copy of deck
-        self.deck = deepcopy(deck)
+        self.deck = copy.deepcopy(deck)
         self.blind = blind
         self.pot = 0
         self.high_bet = 0

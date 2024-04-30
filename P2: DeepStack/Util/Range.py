@@ -1,12 +1,11 @@
-from Util.Card import Card
-
+import Util.Card as Card
 class Range:
     def __init__(self):
         self.range_probability_distribution = self.gen_hole_pairs()
     
     def gen_hole_pairs(self) -> dict:
         hole_cards = {}
-        cards = Card.get_all_cards()  # Assuming you have a method to get all possible cards
+        cards = Card.Card.get_all_cards()  # Assuming you have a method to get all possible cards
         
         for card1 in cards:
             for card2 in cards:

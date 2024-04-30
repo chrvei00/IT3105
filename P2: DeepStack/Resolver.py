@@ -4,6 +4,7 @@ import Util.Game_Util as gu
 import State_Manager as sm
 import Util.Node as Node
 import Util.Config as config
+import NN as nn
 
 def get_action(player, state) -> str:
     player_range = player.player_range
@@ -44,7 +45,6 @@ def update_strategy(node):
     for pair in node.regret_sum:
         for action in actions:
             regret_util = util.expected_payoff(pair, node.action, state.table, sum(node.state.bets.values())) - util.get_best_alternative_payoff(pair, node.state.table, sum(node.state.bets.values()))
-            print(f"Regret Utility: {-regret_util}")
             regret = max(0, -regret_util)
             node.regret_sum[pair][action] += regret
     for pair in node.strategy_sum:
@@ -86,7 +86,8 @@ def bayesian_range_updater(current_range, observed_action, strategy):
     return updated_range
 
 def neural_network(state, player_range, opponent_range):
-    # TODO: implement neural network
+    if config.read_nn_evalution():
+        nn.evaluate(state, player_range, opponent_range)
     return heuristic_evaluation(state, player_range, opponent_range)
 
 def heuristic_evaluation(state, player_range, opponent_range) -> dict:

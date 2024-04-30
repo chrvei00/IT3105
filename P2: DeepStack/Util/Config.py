@@ -1,10 +1,10 @@
-from configparser import ConfigParser
+import configparser
 
 def read_setup() -> bool:
     """
     Read the setup from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getboolean('setup', 'auto')
 
@@ -12,7 +12,7 @@ def read_end_depth() -> int:
     """
     Read the end depth from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getint('setup', 'end_depth')
 
@@ -20,7 +20,7 @@ def read_rollouts() -> int:
     """
     Read the number of rollouts from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getint('setup', 'rollouts')
 
@@ -28,7 +28,7 @@ def read_simultation_size() -> int:
     """
     Read the simulation size from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getint('oracle', 'simulation_size')
 
@@ -36,7 +36,7 @@ def read_cheat_sheet() -> dict:
     """
     Read the cheat sheet from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     if not config.has_section('cheat_sheet'):
         return None
@@ -46,7 +46,7 @@ def read_blind() -> int:
     """
     Read the blind from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getint('setup', 'blind')
 
@@ -54,15 +54,23 @@ def read_monitor() -> bool:
     """
     Read the monitor from the config file.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     return config.getboolean('setup', 'monitor')
+
+def read_nn_evalution() -> bool:
+    """
+    Read the neural network evaluation from the config file.
+    """
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return config.getboolean('setup', 'nn_evaluation')
 
 def write_cheat_sheet(hand: list, opponents: int, wins: int, n: int) -> None:
     """
     Write the win rate of a hand to the cheat sheet.
     """
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read('config.ini')
     if not config.has_section('cheat_sheet'):
         config.add_section('cheat_sheet')
