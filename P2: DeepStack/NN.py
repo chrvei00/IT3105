@@ -6,6 +6,7 @@ import Util.Card as Card
 
 def evaluate(state, player_range, opponent_range):
     loaded_model = tf.keras.models.load_model('nn/model_<function input_shape at 0x160786d40>_10_2024-04-30, 19:45.h5')
+    loaded_model.compile()
     # Flatten and concatenate features
     diff = 10 - len(encode_cards(state.table))
     features = np.concatenate([
@@ -27,6 +28,7 @@ def encode_cards(cards: list) -> list:
         encoded.append(card.get_real_value())
         encoded.append(turn_suit_to_int(card.get_suit()))
     return encoded
+
 def turn_suit_to_int(suit: str) -> int:
     if suit == "♥":
         return 0

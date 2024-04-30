@@ -6,7 +6,7 @@ import inquirer
 
 def play(auto):
     if auto:
-        Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = 0, 1, 1, "simple", 1000
+        Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = 1, 0, 1, "simple", 1000
     else:
         Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips = gui.create_game_setup_window()
     

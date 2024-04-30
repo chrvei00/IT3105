@@ -147,7 +147,7 @@ def add_history(window, message):
     new_message = message + "\n" + "-"*50 + "\n" + current_history  # Prepend new message and separator
     window['-HISTORY-'].update(value=new_message)
 
-def update_turn(window, player, players: list):
+def update_turn(window, player, players: list, timer: int = 0):
     window.refresh()
     if player.type == "human":
         window['-TURN-'].update(f"{player.name} is up (q: fold, w: call, e: bet, r: all-in)")
@@ -156,7 +156,7 @@ def update_turn(window, player, players: list):
     if player.type != "human":
         for action in ['fold', 'call', 'bet', 'all-in']:
             window[action].update(visible=False)
-        window['-INFO-'].update(f"{player.name} is deciding what to do...")
+        window['-INFO-'].update(f"{player.name} is deciding what to do... timer: {timer}")
     for o_player in players:
         if not o_player.active_in_hand:
             window[f'-NAME-{o_player.index}-'].update(text_color='black', background_color='red')

@@ -4,6 +4,10 @@ import Util.Card as Card
 import random
 import Resolver as res
 import Util.Node as node
+import Util.gui as gui
+import threading
+import time
+import copy
 
 class Player:
     def __init__(self, name: str, type: str = "human", index: int = 0):
@@ -16,6 +20,8 @@ class Player:
         self.is_all_in = False
         self.has_raised = False
         self.index = index
+        self.action = None
+        self.state = {}
         if type == "AI_resolve":
             self.player_range, self.opponent_range = util.generate_ranges()
     
@@ -50,10 +56,20 @@ class Player:
         return (f"{self.name} has bet {amount} chips")
 
     def get_action(self, window, high_bet: int, pot: int, table: list, players: list, blind: int):
+        self.action = None
         if self.type == "human":
             return util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
         elif self.type == "AI_resolve":
-            return self.get_AI_Resolver_action(high_bet, pot, table, players, blind)
+            args = [copy.deepcopy(high_bet), copy.deepcopy(pot), copy.deepcopy(table), copy.deepcopy(players), copy.deepcopy(blind)]
+            thread = threading.Thread(target=self.get_AI_Resolver_action, args=args)
+            thread.start()
+            counter = 0
+            while(not self.action):
+                time.sleep(1)
+                counter += 1
+                gui.update_turn(window, self, players, counter)
+            thread.join()
+            return self.action
         else:
             util.visualize_AI(window, table, self.name, self.chips, pot, self.current_bet, high_bet)
             return self.get_AI_Rollout_action(high_bet, pot, table, players, blind)
@@ -91,7 +107,8 @@ class Player:
             has_called[player.name] = False
         
         state = node.State("decision", bets, blind, player_stacks, table, self.name, has_raised, has_called)
-        return res.get_action(self, state)
+        self.action = res.get_action(self, state)
+        return
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
         payout = (oracle.hole_card_rollout(table, self.cards, len(players)-1, cache=False, save=False) * pot)/high_bet   
