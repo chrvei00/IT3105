@@ -21,9 +21,9 @@ class Player:
         self.is_all_in = False
         self.has_raised = False
         self.index = index
-        self.action = None
-        self.state = {}
         if type == "AI_resolve":
+            self.action = None
+            self.resolver = res.Resolver()
             self.player_range, self.opponent_range = util.generate_ranges()
     
     def __repr__(self):
@@ -57,11 +57,11 @@ class Player:
         return (f"{self.name} has bet {amount} chips")
 
     def get_action(self, window, high_bet: int, pot: int, table: list, players: list, blind: int):
-        self.action = None
         if self.type == "human":
             return util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
         elif self.type == "AI_resolve":
-            args = [copy.deepcopy(high_bet), copy.deepcopy(pot), copy.deepcopy(table), copy.deepcopy(players), copy.deepcopy(blind)]
+            self.action = None
+            args = [copy.deepcopy(high_bet), copy.deepcopy(pot), copy.deepcopy(table), players, copy.deepcopy(blind)]
             thread = threading.Thread(target=self.get_AI_Resolver_action, args=args)
             thread.start()
             counter = 0
@@ -103,13 +103,13 @@ class Player:
         has_raised = {}
         has_called = {}
         for player in players:
-            bets[player.name] = player.current_bet
-            player_stacks[player.name] = player.chips
-            has_raised[player.name] = player.has_raised
+            bets[player.name] = copy.deepcopy(player.current_bet)
+            player_stacks[player.name] = copy.deepcopy(player.chips)
+            has_raised[player.name] = copy.deepcopy(player.has_raised)
             has_called[player.name] = False
         
         state = node.State("decision", bets, blind, player_stacks, table, self.name, has_raised, has_called)
-        self.action = res.get_action(self, state)
+        self.action = self.resolver.get_action(self, state)
         return
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):

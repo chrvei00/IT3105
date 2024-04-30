@@ -22,7 +22,7 @@ def generate_children(node: Node.Node, end_depth: int, rollouts: int):
         if node.state.type == "decision":
             # print("Decision node, creating children for actions: ", util.possible_actions(node))
             for action in util.possible_actions(node):
-                node.add_child( Node.Node(generate_child_state(state=node.state, object=action), regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=action), action=action, regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
         elif node.state.type == "chance":
             # print("Chance node, creating children for cards: ", util.possible_cards(node.state, max=rollouts))
             for card in util.possible_cards(node.state, max=rollouts):
