@@ -5,14 +5,37 @@ import Util.gui as gui
 import copy
 
 class Hand:
+    """
+    Represents a hand in a poker game.
+
+    Attributes:
+    - window: The GUI window for displaying the game.
+    - players: A list of Player objects representing the players in the hand.
+    - dealer: The Player object representing the dealer.
+    - deck: The Deck object representing the deck of cards.
+    - blind: The blind amount for the hand.
+    - pot: The current amount of chips in the pot.
+    - high_bet: The highest bet made by any player in the hand.
+    - table: A list of Card objects representing the cards on the table.
+    """
+
     def __init__(self, window, players: list, dealer: Player.Player, deck: Card.Deck, blind: int):
+        """
+        Initializes a Hand object.
+
+        Parameters:
+        - window: The GUI window for displaying the game.
+        - players: A list of Player objects representing the players in the hand.
+        - dealer: The Player object representing the dealer.
+        - deck: The Deck object representing the deck of cards.
+        - blind: The blind amount for the hand.
+        """
         util.validate_hand(players, dealer, deck, blind)
         self.window = window
         self.dealer = dealer
         self.initial_players = list(players)
         self.players = list(players)
         self.players = util.rotate(self.players, dealer)
-        #Create copy of deck
         self.deck = copy.deepcopy(deck)
         self.blind = blind
         self.pot = 0
@@ -20,12 +43,30 @@ class Hand:
         self.table = []
 
     def __repr__(self):
+        """
+        Returns a string representation of the Hand object.
+
+        Returns:
+        - A string representation of the Hand object.
+        """
         return f"Hand has {len(self.players)} players, the dealer is {self.dealer}, the pot is {self.pot}, the high bet is {self.high_bet}, and the table is {self.table}"
     
     def active_players(self):
+        """
+        Returns a list of active players in the hand.
+
+        Returns:
+        - A list of Player objects representing the active players in the hand.
+        """
         return [player for player in self.players if player.active_in_hand]
 
     def play(self):
+        """
+        Plays a hand of poker.
+
+        Returns:
+        - A string representing the winners of the hand.
+        """
         gui.add_history(self.window, "Starting new hand")
         self.deck.shuffle()
         self.deal_cards()
@@ -47,16 +88,17 @@ class Hand:
         return winner_str
     
     def determine_winners(self):
+        """
+        Determines the winners of the hand.
+
+        Returns:
+        - A list of Player objects representing the winners of the hand.
+        """
         winners = []
-        # Determine wether there is a difference in the bets of players (meaning some players are all in)
         while any(x.current_bet != self.high_bet for x in self.active_players()):
-            # Find the player with the lowest bet
             lowest_bet = min(filter(lambda x: x.current_bet != self.high_bet, self.active_players()), key=lambda x: x.current_bet)
-            # Determine winners
             winners = util.get_winner(self.active_players(), self.table)
-            # Remove the players matching the lowest bet from the active players
             self.pot -= lowest_bet.current_bet*(len(self.active_players()))
-            # Reward winner and adjust pot and bets
             self.reward(winners, amount=lowest_bet.current_bet*len(self.active_players()))
             self.pot -= lowest_bet.current_bet*len(self.active_players())
             for player in self.active_players():
@@ -73,6 +115,9 @@ class Hand:
         return winners
 
     def deal_cards(self):
+        """
+        Deals cards to the players in the hand.
+        """
         self.deck.shuffle()
         for i in range(2):
             for player in self.players:
@@ -81,6 +126,9 @@ class Hand:
                     player.cards.append(card)
     
     def blinds(self):
+        """
+        Places the blinds for the hand.
+        """
         gui.add_history(self.window, f"{self.players[0].name} is the small blind and {self.players[1].name} is the big blind")
         self.players[0].bet(self.blind)
         self.players[1].bet(self.blind * 2)
@@ -94,10 +142,22 @@ class Hand:
         self.high_bet = util.get_high_bet(self.players)
 
     def fold(self, player: Player):
+        """
+        Folds a player's hand.
+
+        Parameters:
+        - player: The Player object representing the player to fold.
+        """
         player.active_in_hand = False
         gui.add_history(self.window, f"{player.name} has folded")
 
     def deal_table(self, round: int):
+        """
+        Deals cards to the table.
+
+        Parameters:
+        - round: The current round of betting.
+        """
         if round > 3:
             raise ValueError("Round cannot be greater than 3")
         if round == 0:
@@ -112,6 +172,12 @@ class Hand:
         gui.add_history(self.window, f"Dealing {round_names[round]}: {cards}")
     
     def get_player_actions(self, first_round: bool):
+        """
+        Gets the actions of the players in the hand.
+
+        Parameters:
+        - first_round: A boolean indicating if it is the first round of betting.
+        """
         gui.visualize_players(self.window, self.players)
         self.player_action_round(first_round)
         while not util.round_over(self.active_players(), self.high_bet):
@@ -121,6 +187,12 @@ class Hand:
 
         
     def player_action_round(self, first_round: bool=False):
+        """
+        Executes a round of player actions.
+
+        Parameters:
+        - first_round: A boolean indicating if it is the first round of betting.
+        """
         if first_round:
             players = self.active_players()[2:] + self.active_players()[:2]
         else:
@@ -169,6 +241,13 @@ class Hand:
 
 
     def reward(self, winners: list, amount: int=None):
+        """
+        Rewards the winners of the hand.
+
+        Parameters:
+        - winners: A list of Player objects representing the winners of the hand.
+        - amount: The amount of chips to be rewarded to each winner. If None, the pot is divided equally among the winners.
+        """
         if amount is not None:
             for player in winners:
                 player.reward(amount/len(winners))
@@ -178,5 +257,8 @@ class Hand:
         gui.add_history(self.window, f"Winner(s): {', '.join([winner.name for winner in winners])}, amount: {amount}")
 
     def reset(self):
+        """
+        Resets the hand for a new round.
+        """
         for player in self.initial_players:
             player.reset_cards_and_bet()

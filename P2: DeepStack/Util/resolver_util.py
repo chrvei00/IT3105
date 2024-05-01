@@ -7,19 +7,30 @@ import re
 def predict_value(hole_cards, table: list):
     """
     Predicts the value of a particular hand given the current table.
-    This simplified version uses the utility matrix to determine the hand's value.
+    
+    Args:
+        hole_cards (str): The hole cards as a string.
+        table (list): The current table as a list of cards.
+    
+    Returns:
+        float: The predicted value of the hand.
     """
-    # Assume `utility_matrix` is keyed by player 1's hands and values are dictionaries keyed by player 2's hands.
-    # This value is a simplified estimate assuming equal probability of player 2's hands.
     return game_util.get_utility(turn_hand_string_to_list(hole_cards), table)
     
 
 def expected_payoff(hole_cards, action, table, pot):
     """
     Estimates the expected utility or payoff of taking a certain action with a certain pair of hole cards.
+    
+    Args:
+        hole_cards (str): The hole cards as a string.
+        action (str): The action to take.
+        table (list): The current table as a list of cards.
+        pot (float): The current pot size.
+    
+    Returns:
+        float: The estimated expected utility or payoff.
     """
-    # The expected payoff of a hand can be computed as the average utility of that hand against all possible opponent hands.
-    # Here, we assume all actions have the same effect on utility, which may not be the case in a real poker game.
     if action == "fold":
         return -1 * pot
     return game_util.get_utility(turn_hand_string_to_list(hole_cards), table)*pot
@@ -27,14 +38,26 @@ def expected_payoff(hole_cards, action, table, pot):
 def get_best_alternative_payoff(hole_cards, table, pot):
     """
     Computes the best alternative payoff if the best action was taken, compared to the current action.
+    
+    Args:
+        hole_cards (str): The hole cards as a string.
+        table (list): The current table as a list of cards.
+        pot (float): The current pot size.
+    
+    Returns:
+        float: The best alternative payoff.
     """
-    # This is a simplification since in a real game you would consider different actions leading to different states.
-    # Here we are just getting the best possible utility without considering actions.
     return pot
 
 def turn_hand_string_to_list(hand: str) -> list:
     """
     Convert a hand string to a list of cards.
+    
+    Args:
+        hand (str): The hand as a string.
+    
+    Returns:
+        list: The hand as a list of Card objects.
     """
     cards = re.findall(r'[♠♣♦♥](?:10|[1-9JQKA])', hand)
     card1 = Card.Card(suit=represent_suit(cards[0][0]), value=represent_value(cards[0][1:]))
@@ -42,6 +65,15 @@ def turn_hand_string_to_list(hand: str) -> list:
     return [card1, card2]
 
 def represent_suit(suit: str):
+    """
+    Represents the suit of a card as a string.
+    
+    Args:
+        suit (str): The suit of the card.
+    
+    Returns:
+        str: The suit represented as a string.
+    """
     if suit == "♥":
         return "Hearts"
     elif suit == "♦":
@@ -52,6 +84,15 @@ def represent_suit(suit: str):
         return "Spades"
 
 def represent_value(value: str):
+    """
+    Represents the value of a card as an integer.
+    
+    Args:
+        value (str): The value of the card.
+    
+    Returns:
+        int: The value represented as an integer.
+    """
     if value == "J":
         return 11
     elif value == "Q":
@@ -66,6 +107,12 @@ def represent_value(value: str):
 def average_strategy(strategy: list) -> dict:
     """
     Compute the average strategy from a list of strategies.
+    
+    Args:
+        strategy (list): A list of strategies.
+    
+    Returns:
+        dict: The average strategy as a dictionary.
     """
     actions = config.get_actions()
     average = state_util.gen_hole_pair_matrix()
