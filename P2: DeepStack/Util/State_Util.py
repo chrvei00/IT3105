@@ -1,40 +1,139 @@
 import copy
-from Util.Search_Tree import State
+import Util.Node as Node
+import Util.Card as Card
+import Util.Config as config
 
-def gen_state(state: State, action: tuple) -> State:
+def gen_state(state: Node.State, object: object) -> Node.State:
     """
     Generate a child state depending on the action taken.
     """
-    ranges_copy = copy.deepcopy(state.player_ranges)
-    bets_copy = copy.deepcopy(state.bets)
     stacks_copy = copy.deepcopy(state.player_stacks)
-    history_copy = copy.deepcopy(state.history)
+    bets_copy = copy.deepcopy(state.bets)
+    has_raised_copy = copy.deepcopy(state.has_raised)
+    has_called_copy = copy.deepcopy(state.has_called)
 
-    next_player_to_act = state.player_ranges[state.to_act + 1] if state.to_act + 1 < len(state.player_ranges) else state.player_ranges[0]
-    new_pot = state.pot + action[1]
+    if type(object) == str:
+        action = object
+        # Select the only other player to act next
+        for key in state.player_stacks.keys():
+            if key != state.to_act:
+                next_player_to_act = key
+        if action == "fold":
+            del stacks_copy[state.to_act]
+            del bets_copy[state.to_act]
+            state_type = "terminal"
+        elif action == "all-in":
+            bets_copy[state.to_act] += stacks_copy[state.to_act]
+            stacks_copy[state.to_act] = 0
+            # Find type of next state
+            if all([stack == 0 for stack in stacks_copy]):
+                state_type = "terminal"
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5:
+                state_type = "chance"
+            else:
+                state_type = "decision"
+        elif action == "call":
+            bets_copy[state.to_act] = max(state.bets.values())
+            stacks_copy[state.to_act] -= max(state.bets.values()) - state.bets[state.to_act]
+            # Find type of next state
+            if all([stack == 0 for stack in stacks_copy]):
+                if len(state.table) < 5:
+                    state_type = "chance"
+                else:
+                    state_type = "terminal"
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5 and (state.has_called.get(next_player_to_act) == True or state.has_raised.get(next_player_to_act) == True):
+                has_raised_copy[next_player_to_act] = False
+                has_called_copy[next_player_to_act] = False
+                has_raised_copy[state.to_act] = False
+                has_called_copy[state.to_act] = False
+                state_type = "chance"
+            else:
+                has_called_copy[state.to_act] = True
+                state_type = "decision"
+        elif action == "bet":
+            bets_copy[state.to_act] = max(state.bets.values()) + state.blind * 2
+            stacks_copy[state.to_act] -= max(state.bets.values()) - state.bets[state.to_act] + state.blind * 2
+            has_raised_copy[state.to_act] = True
+            # Find type of next state
+            if all([stack == 0 for stack in stacks_copy]):
+                if len(state.table) < 5:
+                    state_type = "chance"
+                else:
+                    state_type = "terminal"
+            elif all([bet >= max(state.bets.values()) for bet in bets_copy.values()]) and len(state.table) < 5 and (state.has_called.get(next_player_to_act) == True or state.has_raised.get(next_player_to_act) == True):
+                has_raised_copy[next_player_to_act] = False
+                has_called_copy[next_player_to_act] = False
+                has_raised_copy[state.to_act] = False
+                has_called_copy[state.to_act] = False
+                state_type = "chance"
+            else:
+                has_raised_copy[state.to_act] = True
+                has_called_copy[next_player_to_act] = False
+                state_type = "decision"
 
-    if action[0] == "fold":
-        ranges_copy.remove(state.to_act)
-        stacks_copy.remove(state.to_act)
-        bets_copy.remove(state.to_act)
+        
+        return Node.State(state_type, bets_copy, state.blind, stacks_copy, state.table, next_player_to_act, has_raised_copy, has_called_copy)
     else:
-        stacks_copy.update(stacks_copy.get(state.to_act) - action[1])
-        bets_copy.update(bets_copy.get(state.to_act) + action[1])
-    new_history = history_copy.append(f"{state.to_act} {action[0]} {action[1]}")
-    return State(ranges_copy, bets_copy, state.blind, stacks_copy, state.table, history_copy, next_player_to_act)
-    
-def possible_actions(state: State) -> list:
+        card = object
+        table_copy = copy.deepcopy(state.table)
+        table_copy.append(card)
+        if len(table_copy) < 5:
+            return Node.State("decision", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+        else:
+            return Node.State("terminal", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+
+def possible_actions(node: Node.Node) -> list:
     """
     Get all possible actions for the current state.
     """
-    actions = [("fold", 0)]
-    # Check if acting player can call
-    if state.bets.get(state.to_act) < max(state.bets.values()):
-        actions.append(("call", max(state.bets.values()) - state.bets.get(state.to_act)))
-    # Check if acting player can bet
-    if state.player_stacks.get(state.to_act) > state.bets.get(state.to_act):
-        actions.append(("bet", state.blind * 2))
-    # Check if acting player can go all in
-    if state.player_stacks.get(state.to_act) < state.bets.get(state.to_act):
-        actions.append(("all in", state.player_stacks.get(state.to_act)))
+    allowed_actions = config.get_actions()
+    state = node.state
+    actions = ["fold"]
+    if state.player_stacks.get(state.to_act) > 0 and "all-in" in allowed_actions:
+        actions.append("all-in")
+    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act) and "call" in allowed_actions:
+        actions.append("call")
+    if state.player_stacks.get(state.to_act) >= max(state.bets.values()) - state.bets.get(state.to_act) + state.blind * 2 and state.has_raised[state.to_act] == False and "bet" in allowed_actions:
+        actions.append("bet")
     return actions
+
+def possible_cards(state: Node.State, max: int) -> list:
+    """
+    Get all possible cards for the current state.
+    """
+    deck = Card.Deck()
+    deck.shuffle()
+    cards = deck._deal(max)
+    return [card for card in cards if card not in state.table]
+
+def possible_hole_pairs(state: Node.State=None, max: int=52) -> list:
+    """
+    Get all possible hole card pairs for the current state.
+    """
+    hole_pairs = []
+    for card1 in Card.Card.get_all_cards():
+        for card2 in Card.Card.get_all_cards():
+            if not (card1.get_real_value() == card2.get_real_value() and card1.get_suit() == card2.get_suit()):
+                # Sort the hole pair, so the highest card is first
+                hole_pair_sorted = sorted([card1, card2], key=lambda card: card.get_real_value(), reverse=True)
+                hole_pairs.append(hole_pair_sorted)
+    return hole_pairs
+
+def gen_hole_pair_matrix(init_value: float = 0) -> dict:
+    """
+    Generate the regret sum for the current node.
+    """
+    actions = config.get_actions()
+    matrix = {}
+    for pair in possible_hole_pairs():
+        matrix[config.format_hole_pair(pair)] = {}
+        for action in actions:
+            matrix[config.format_hole_pair(pair)][action] = init_value
+    return matrix
+
+def gen_range() -> dict:
+    matrix = {}
+    num_hole_pairs = len(possible_hole_pairs())
+    for pair in possible_hole_pairs():
+        matrix[config.format_hole_pair(pair)] = 1/num_hole_pairs
+    return matrix

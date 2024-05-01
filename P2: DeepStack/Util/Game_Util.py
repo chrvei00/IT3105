@@ -1,20 +1,24 @@
 import random
-from Util.Player import Player
-from Util.Card import Deck
-from itertools import combinations
-from collections import Counter
+import Util.Player as Player
+import Util.Card as Card
+import itertools
+import collections
+import Util.gui as gui
+import Util.Config as config
+import Util.State_Util as state_util
+import Poker_Oracle as oracle
 
-def validate_game(Num_Human_Players, Num_AI_Players, Game_Type):
-    if Num_Human_Players < 0 or Num_AI_Players < 0:
+def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players):
+    if Num_Human_Players < 0 or Num_AI_Rollout_Players < 0 or Num_AI_Resolve_Players < 0:
         raise ValueError("Number of players must be a non-negative integer")
-    elif Num_Human_Players + Num_AI_Players < 2:
+    elif Num_Human_Players + Num_AI_Rollout_Players + Num_AI_Resolve_Players < 2:
         raise ValueError("There must be at least 2 players")
-    elif Num_Human_Players + Num_AI_Players > 6:
+    elif Num_Human_Players + Num_AI_Rollout_Players > 6:
         raise ValueError("There can be at most 10 players")
-    elif Game_Type not in ["simple", "complex"]:
-        raise ValueError("Game type must be either simple or complex")
+    if Num_AI_Resolve_Players > 0 and Num_Human_Players + Num_AI_Resolve_Players + Num_AI_Rollout_Players > 2:
+        raise ValueError("There can be at most 2 players in a game with AI resolvers")
 
-def validate_hand(players: list, dealer: Player, deck: Deck, blind: int):
+def validate_hand(players: list, dealer: Player, deck: Card.Deck, blind: int):
     if len(players) < 2:
         raise ValueError("There must be at least 2 players")
     elif len(players) > 10:
@@ -26,14 +30,16 @@ def validate_hand(players: list, dealer: Player, deck: Deck, blind: int):
     elif deck is None:
         raise ValueError("Deck cannot be None")
 
-def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
+def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players: int, start_chips):
     players = []
     # Create human players
     for i in range(Num_Human_Players):
-        players.append(Player(f"H{i}" , "human"))
-    # Create AI players
-    for i in range(Num_AI_Players):
-        players.append(Player(f"AI{i}", "AI"))
+        players.append(Player.Player(f"H {i}" , "human", i))
+    # Create AI rollout players
+    for i in range(Num_AI_Rollout_Players):
+        players.append(Player.Player(f"AI_roll {i}", "AI_rollout", i + Num_Human_Players))
+    for i in range(Num_AI_Resolve_Players):
+        players.append(Player.Player(f"AI_res {i}", "AI_resolve", i + Num_Human_Players + Num_AI_Rollout_Players))
     # Give each player starting chips
     for player in players:
         player.chips = start_chips
@@ -42,9 +48,9 @@ def setup_game(Num_Human_Players, Num_AI_Players, Game_Type, start_chips):
     # Shuffle the players
     random.shuffle(players)
     # Create a deck
-    deck = Deck()
+    deck = Card.Deck()
     # Create a blind
-    blind = 10
+    blind = config.read_blind()
 
     return players, dealer, deck, blind
 
@@ -55,12 +61,51 @@ def hand_over(players: list, table: list):
     return len(players) == 1 or len(table) == 5
 
 def round_over(players: list, high_bet: int):
-    for player in players:
+    if skip_player_actions(players):
+        return True
+    if len(players) == 1:
+        return True
+    for player in filter(lambda x: x.active_in_hand and not x.is_all_in, players):
         if player.current_bet != high_bet:
             return False
     return True
 
-def rotate(players: list, dealer: Player):
+def skip_player_actions(players: list):
+    count_not_all_in = 0
+    for player in players:
+        if player.is_all_in == False:
+            count_not_all_in += 1
+    if count_not_all_in <= 1:
+        return True
+
+def end_action_round(players: list):
+    if len(players) == 1:
+        return True
+    if skip_player_actions(players):
+        for player in players:
+            if player.is_all_in == False and player.current_bet - get_high_bet(players) < 0:
+                return False
+        return True
+    return False
+
+def adjust_hand_params(players: list, pot: int):
+    high_bet = get_high_bet(players)
+    non_all_in_players = []
+    for player in players:
+        if player.is_all_in == False:
+            non_all_in_players.append(player)
+    if len(non_all_in_players) == 1:
+        high_bet_excluded_non_all_in = 0
+        for player in players:
+            if player != non_all_in_players[0] and (player.current_bet > high_bet_excluded_non_all_in):
+                high_bet_excluded_non_all_in = player.current_bet
+        if high_bet_excluded_non_all_in < non_all_in_players[0].current_bet:
+            non_all_in_players[0].chips += non_all_in_players[0].current_bet - high_bet_excluded_non_all_in
+            pot -= non_all_in_players[0].current_bet - high_bet_excluded_non_all_in
+            non_all_in_players[0].current_bet = high_bet_excluded_non_all_in
+    return pot
+
+def rotate(players: list, dealer: Player.Player):
     while players[-1] != dealer:
         players.append(players.pop(0))
     return players
@@ -81,25 +126,25 @@ def get_high_bet(players: list):
 
 def get_winner(players: list, table: list):
     best_hand = None
-    winner = []
+    winners = []
     for player in players:
         hand = player.get_cards()
         if best_hand is None:
             best_hand = hand
-            winner = [player]
+            winners = [player]
         else:
             comp = compare_two_hands(hand, best_hand, table)
             if comp == -1:
                 best_hand = hand
-                winner = [player]
+                winners = [player]
             elif comp == 0:
-                winner.append(player)
-    return winner
+                winners.append(player)
+    return winners
 
 def best_hand_from_seven(cards):
     """Given seven cards, returns the best five-card hand."""
     best_rank = ("High Card", [0])
-    for combo in combinations(cards, 5):
+    for combo in itertools.combinations(cards, 5):
         rank, key_cards = evaluate_hand(combo)
         if RANKS[rank] > RANKS[best_rank[0]] or (RANKS[rank] == RANKS[best_rank[0]] and key_cards > best_rank[1]):
             best_rank = (rank, key_cards)
@@ -107,8 +152,8 @@ def best_hand_from_seven(cards):
 
 def compare_two_hands(hand1, hand2, board):
     """Compares the best hands of two players given their private cards and the board."""
-    combined_hand1 = hand1 + board
-    combined_hand2 = hand2 + board
+    combined_hand1 = board + hand1
+    combined_hand2 = board + hand2
     
     best_hand1 = best_hand_from_seven(combined_hand1)
     best_hand2 = best_hand_from_seven(combined_hand2)
@@ -141,9 +186,9 @@ RANKS = {
 
 def evaluate_hand(hand):
     """Evaluates a hand and returns its rank and the key cards for comparison."""
-    values = sorted([card.value for card in hand], reverse=True)
+    values = sorted([int(card.get_real_value()) for card in hand], reverse=True)
     suits = [card.suit for card in hand]
-    value_counts = Counter(values)
+    value_counts = collections.Counter(values)
     is_flush = len(set(suits)) == 1
     is_straight = all([values[i] - values[i+1] == 1 for i in range(len(values)-1)]) or values == [14, 5, 4, 3, 2, 1]
 
@@ -189,3 +234,33 @@ def compare_hands(hand1, hand2):
             elif key_cards1[i] < key_cards2[i]:
                 return 1
         return 0  # Hands are completely equal
+
+def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
+    gui.visualize_AI(window, table, name, chips, pot, current_bet, high_bet)
+
+def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int, actions: list):
+    return gui.visualize_human(window, table, cards, name, chips, pot, current_bet, high_bet, actions)
+
+def get_string_representation_cards(cards: list):
+    return [f"{card.get_value()}{card.get_suit()}" for card in cards]
+
+def generate_ranges():
+    return state_util.gen_range(), state_util.gen_range()
+
+def get_utility(hand1: list, hand2: list = None, table: list = None):
+    deck = Card.Deck()
+    if table is None:
+        table = []
+    if hand2 is None:
+        hand2 = []
+    deck.cards = [card for card in deck.cards if card not in hand1 + hand2 + table]
+    wins = 0
+    for i in range(config.read_simultation_size()):
+        if oracle.simulate_table(deck, table, hand1, hand2):
+            wins += 1
+        else:
+            wins -= 1
+    return wins / config.read_simultation_size()
+
+def get_utility_potrelative(hand: list, table: list, pot: float):
+    return oracle.hole_card_rollout(table, hand, 1, cache=False, save=False)*pot

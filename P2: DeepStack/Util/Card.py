@@ -2,6 +2,10 @@ import random
 
 class Card:
     def __init__(self, suit: str, value: int):
+        if suit not in ["Hearts", "Diamonds", "Clubs", "Spades"]:
+            raise ValueError("Invalid suit")
+        if int(value) not in [2, 3, 4, 5]:
+            raise ValueError("Invalid value", value)
         self.suit = suit
         self.value = value
 
@@ -30,15 +34,18 @@ class Card:
             return value
     def get_value(self):
         return self.represent_value(self.value)
-    def get_real_value(self):
+    def get_real_value(self) -> int:
         return self.value
     def get_suit(self):
         return self.represent_suit(self.suit)
 
+    def get_all_cards():
+        return [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2, 3, 4, 5]]
+
 
 class Deck:
     def __init__(self):
-        self.cards = [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2,3,4,5,6,7,8,9,10,11,12,13,14]]
+        self.cards = [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2, 3, 4]]
 
     def __repr__(self):
         return f"Deck of {self.count()} cards"
@@ -55,8 +62,8 @@ class Deck:
         self.cards = self.cards[:-actual]
         return cards
 
-    def deal_card(self):
-        return self._deal(1)[0]
+    def deal_card(self, num=1):
+        return self._deal(num)
 
     def deal_hand(self, hand_size):
         return self._deal(hand_size)

@@ -1,26 +1,42 @@
-from Util.Search_Tree import State
-from Util.State_Util import gen_state_call, gen_state_fold, gen_state_bet, gen_state_all_in, possible_actions
+import Util.Node as Node
+import Util.State_Util as util
 
-def generate_root_state(player_ranges: dict, pot: int, current_bet: int, player_stacks: dict, table: list, history: list, to_act: str) -> State:
+def generate_root(state: Node.State) -> Node.Node:
     """
     Generate the root state for the search tree.
     """
-    return State(player_ranges, pot, current_bet, player_stacks, table, history, to_act)
+    return Node.Node(state=state, depth=0, regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range())
 
-def generate_child_state(state: State, action: tuple) -> State:
+def generate_child_state(state: Node.State, object: str) -> Node.State:
     """
     Generate a child state depending on the action taken.
     """
-    if action[0] not in possible_actions(state):
-        raise ValueError("Action is not possible in the current state")
+    return util.gen_state(state=state, object=object)
 
-    return gen_state(state, action)
-
-def generate_child_states(tree: Search_Tree, state: State) -> list:
+def generate_children(node: Node.Node, end_depth: int, rollouts: int):
     """
     Generate all child states for the search tree.
     """
-    child_states = []
-    for action in possible_actions(state):
-        child_states.append(generate_child_state(state, action))
-    return child_states
+    depth = node.depth
+    if depth < end_depth and node.children == []:
+        if node.state.type == "decision":
+            # print("Decision node, creating children for actions: ", util.possible_actions(node))
+            for action in util.possible_actions(node):
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=action), action=action, regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
+        elif node.state.type == "chance":
+            # print("Chance node, creating children for cards: ", util.possible_cards(node.state, max=rollouts))
+            for card in util.possible_cards(node.state, max=rollouts):
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=card), regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
+        elif node.state.type == "terminal":
+            # print("Terminal node, no children to create")
+            return
+    for child in node.children:
+        generate_children(node=child, end_depth=end_depth, rollouts=rollouts)
+
+def subtree_generator(state: Node.State, end_stage: str, end_depth: int, rollouts: int) -> Node:
+    """
+    Generate the subtree for the search tree.
+    """
+    root = generate_root(state=state)
+    generate_children(root, end_depth, rollouts)
+    return root
