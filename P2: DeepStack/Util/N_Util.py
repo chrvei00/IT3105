@@ -53,7 +53,8 @@ def simulate_data(num_samples):
         features = np.concatenate([
             np.array(list(player1_range.values())), 
             np.array(list(player2_range.values())), 
-            encode_cards(public_cards), 
+            encode_cards(public_cards),
+            [0 for _ in range(10 - len(public_cards))],
             [pot_size]
         ])
         train_features.append(features)
@@ -83,7 +84,7 @@ def generate_public_cards() -> list:
     """
     deck = Card.Deck()
     deck.shuffle()
-    return deck._deal(5)
+    return deck._deal(random.randint(0, 5))
 
 def generate_relative_pot_size() -> float:
     """

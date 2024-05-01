@@ -37,4 +37,12 @@ def represent_hand_as_string(hand: list) -> str:
     Returns:
     - str: The string representation of the hand.
     """
-    return f"{hand[0].__repr__()}, {hand[1].__repr__()}"
+    return f"{hand[0].__repr__()}{hand[1].__repr__()}"
+
+def flatten_dict(data):
+    flat_data = []
+    for outer_key, inner_dict in data.items():
+        row = {'Item': outer_key}
+        row.update(inner_dict)
+        flat_data.append(row)
+    return flat_data

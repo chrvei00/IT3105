@@ -5,13 +5,17 @@ import State_Manager as sm
 import Util.Node as Node
 import Util.Config as config
 import Neural_Net as nn
+import Poker_Oracle as oracle
+import Util.Oracle_Util as ou
+import numpy as np
+import random
 
 class Resolver:
     def __init__(self):
         self.neural_net = nn.Neural_Net()
         self.root = None
 
-    def get_action(self, player, state) -> str:
+    def get_action(self, player, state, opponent_action) -> str:
         """
         Returns the action to be taken by the player based on the given state.
 
@@ -22,6 +26,20 @@ class Resolver:
         Returns:
             The action to be taken by the player.
         """
+        print("Opponent action: ", opponent_action)
+        if opponent_action == None:
+            self.root = None
+        elif self.root != None and self.root.state.to_act != player.name:
+            for child in self.root.children:
+                if child.action == opponent_action:
+                    self.root = child
+                    update_depth(self.root)
+                    if self.root.state.type == "terminal" or self.root.state.type == "chance":
+                        self.root = None
+                    else:
+                        branch_tree(self.root)
+                        print("Root node updated after opponent action: ", opponent_action)
+                    break
         player_range = player.player_range
         opponent_range = player.opponent_range
         end_stage = "terminal"
@@ -34,7 +52,6 @@ class Resolver:
                     if self.root.state.type == "terminal" or self.root.state.type == "chance":
                         self.root = None
                     else:
-                        visualize_tree(self.root)
                         branch_tree(self.root)
                         print("Root node updated after action: ", action)
                     return action
@@ -60,13 +77,25 @@ class Resolver:
         if not self.root:
             "Generated inital subtree"
             self.root = sm.subtree_generator(State, end_stage, end_depth, rollouts)
-        visualize_tree(self.root)
+            visualize_tree(self.root)
         strategy = []
         for i in range(rollouts):
-            player_value, opponent_value = self.traverse(self.root, player_range, opponent_range, end_stage, end_depth)
-            strategy.append(update_strategy(self.root))
+            print(f"Rollout {i + 1} of {rollouts}")
+            self.traverse(self.root, player_range, opponent_range, end_stage, end_depth)
+            print(f"Finished traversing {i + 1} of {rollouts}. Now updating strategy.")
+            strategy.append(update_strategy(self.root, oracle.generate_utility_matrix(save=False, cache=True)))
+        print("Finished rollouts.")
         average_strategy = util.average_strategy(strategy)
-        action = max(average_strategy[config.format_hole_pair(cards)], key=average_strategy[config.format_hole_pair(cards)].get)
+        action_dict = {}
+        for action in config.get_actions():
+            try:
+                action_dict[action] = action_dict.get(action, 0) + average_strategy[ou.represent_hand_as_string(cards)][action]
+            except KeyError:
+                cards.reverse()
+                action_dict[action] = action_dict.get(action, 0) + average_strategy[ou.represent_hand_as_string(cards)][action]
+        action = max(action_dict, key=action_dict.get)
+        print("Actions: ", action_dict, " for cards ", cards)
+        
         updated_player_range = bayesian_range_updater(player_range, action, average_strategy)
         return action, updated_player_range, opponent_range
 
@@ -90,6 +119,9 @@ class Resolver:
             for child in node.children:
                 node.player_range = bayesian_range_updater(player_range, child.action, node.strategy_sum)
                 node.player_value, node.opponent_value = self.traverse(child, player_range, opponent_range, end_stage, end_depth)
+        else:
+            for child in node.children:
+                node.player_value, node.opponent_value = self.traverse(child, player_range, opponent_range, end_stage, end_depth)
         return node.player_value, node.opponent_value
     
     def neural_network(self, state, player_range, opponent_range):
@@ -108,7 +140,7 @@ class Resolver:
             self.neural_net.evaluate(state, player_range, opponent_range)
         return heuristic_evaluation(state, player_range, opponent_range)
 
-def update_strategy(node):
+def update_strategy(node, utility_matrix):
     """
     Updates the strategy of the node based on the regret sum.
 
@@ -119,15 +151,17 @@ def update_strategy(node):
     if state.type != "decision":
         return
     for node in node.children:
-        update_strategy(node)
+        update_strategy(node, utility_matrix)
     for pair in node.regret_sum:
         for action in config.get_actions():
-            regret_util = util.expected_payoff(pair, node.action, state.table, sum(node.state.bets.values())) - util.get_best_alternative_payoff(pair, node.state.table, sum(node.state.bets.values()))
-            regret = max(0, -regret_util)
-            node.regret_sum[pair][action] += regret
+            payoff = np.mean(utility_matrix[pair])
+            node.regret_sum[pair][action] += util.expected_payoff(payoff, node, action)
     for pair in node.strategy_sum:
         for action in config.get_actions():
-            node.strategy_sum[pair][action] += node.regret_sum[pair][action]
+            if sum(node.regret_sum[pair].values()) > 0:
+                node.strategy_sum[pair][action] += node.regret_sum[pair][action]/sum(node.regret_sum[pair].values())
+            else:
+                node.strategy_sum[pair][action] = random.uniform(0, 1)
     return node.strategy_sum
 
 def bayesian_range_updater(current_range, observed_action, strategy):

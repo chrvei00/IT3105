@@ -1,3 +1,4 @@
+import copy
 import Util.Node as Node
 import Util.State_Util as util
 
@@ -13,13 +14,13 @@ def generate_root(state: Node.State) -> Node.Node:
     """
     return Node.Node(state=state, depth=0, regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range())
 
-def generate_child_state(state: Node.State, object: str) -> Node.State:
+def generate_child_state(state: Node.State, object) -> Node.State:
     """
     Generate a child state depending on the action taken.
 
     Parameters:
     state (Node.State): The parent state.
-    object (str): The action taken.
+    object: The action taken.
 
     Returns:
     Node.State: The child state.
@@ -44,8 +45,8 @@ def generate_children(node: Node.Node, end_depth: int, rollouts: int):
             for action in util.possible_actions(node):
                 node.add_child( Node.Node(generate_child_state(state=node.state, object=action), action=action, regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
         elif node.state.type == "chance":
-            for card in util.possible_cards(node.state, max=rollouts):
-                node.add_child( Node.Node(generate_child_state(state=node.state, object=card), regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
+            for card in util.possible_cards(node.state):
+                node.add_child( Node.Node(generate_child_state(state=node.state, object=card), action=card.__repr__(), regret_sum=util.gen_hole_pair_matrix(), strategy_sum=util.gen_hole_pair_matrix(), player_value=util.gen_range(), opponent_value=util.gen_range()) )
         elif node.state.type == "terminal":
             return
     for child in node.children:

@@ -10,7 +10,7 @@ class Neural_Net:
         Initializes the Neural_Net class.
         Loads the pre-trained model and compiles it.
         """
-        self.model = tf.keras.models.load_model('nn/model_(1003,)_100_2024-05-01, 17:55.h5')
+        self.model = tf.keras.models.load_model('nn/model_(1099,)_100_2024-05-01, 23:45.h5')
         self.model.compile()
     
     def evaluate(self, state, player_range, opponent_range):
@@ -27,6 +27,8 @@ class Neural_Net:
             opponent_value_vector (np.ndarray): The predicted value vector for the opponent's hand range.
         """
         diff = 10 - len(encode_cards(state.table))
+        if diff < 0:
+            print(f"Error: Too many cards on the table. Expected 5, got {len(state.table)}")
         features = np.concatenate([
             np.array(list(player_range.values())),
             np.array(list(opponent_range.values())),

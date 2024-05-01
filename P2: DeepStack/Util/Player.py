@@ -61,8 +61,8 @@ class Player:
         self.active_in_hand = True
         self.is_all_in = False
         self.has_raised = False
+        self.action = None
         if type == "AI_resolve":
-            self.action = None
             self.resolver = res.Resolver()
             self.player_range, self.opponent_range = util.generate_ranges()
     
@@ -151,7 +151,8 @@ class Player:
             str: The action chosen by the player.
         """
         if self.type == "human":
-            return util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
+            self.action = util.visualize_human(window, table, self.cards, self.name, self.chips, pot, self.current_bet, high_bet, actions=self.get_possible_actions(high_bet, blind))
+            return self.action
         elif self.type == "AI_resolve":
             self.action = None
             args = [copy.deepcopy(high_bet), copy.deepcopy(pot), copy.deepcopy(table), players, copy.deepcopy(blind)]
@@ -166,7 +167,8 @@ class Player:
             return self.action
         else:
             util.visualize_AI(window, table, self.name, self.chips, pot, self.current_bet, high_bet)
-            return self.get_AI_Rollout_action(high_bet, pot, table, players, blind)
+            self.action = self.get_AI_Rollout_action(high_bet, pot, table, players, blind)
+            return self.action
 
         return "fold"
     
@@ -200,6 +202,7 @@ class Player:
         self.active_in_hand = True
         self.is_all_in = False
         self.has_raised = False
+        self.action = None
 
     def get_AI_Resolver_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):
         """
@@ -224,7 +227,8 @@ class Player:
             has_called[player.name] = False
         
         state = node.State("decision", bets, blind, player_stacks, table, self.name, has_raised, has_called)
-        self.action = self.resolver.get_action(self, state)
+        opponent_action = list(filter(lambda x: x.name != self.name, players))[0].action
+        self.action = self.resolver.get_action(self, state, opponent_action=opponent_action)
         return
 
     def get_AI_Rollout_action(self, high_bet: int, pot: int, table: list, players: list, blind: int):

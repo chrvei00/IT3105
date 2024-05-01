@@ -58,6 +58,17 @@ def read_cheat_sheet() -> dict:
         return None
     return dict(config['cheat_sheet'])
 
+def read_chance_cards() -> int:
+    """
+    Read the chance cards from the config file.
+    
+    Returns:
+        int: The value of the 'chance_cards' key in the 'setup' section of the config file.
+    """
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    return config.getint('setup', 'chance_cards')
+
 def read_blind() -> int:
     """
     Read the blind from the config file.
@@ -138,7 +149,7 @@ def format_hand(hand: list, opponents: int = 1) -> str:
         suited = "offsuit"
     return f"{format_hand}-{suited}-{opponents+1}".lower()
 
-def format_hole_pair(pair: list) -> tuple:
+def format_hole_pair(pair: list, sort: bool = True) -> str:
     """
     Sort a hand by the value of the cards.
     
@@ -148,6 +159,8 @@ def format_hole_pair(pair: list) -> tuple:
     Returns:
         tuple: A tuple of strings representing the sorted hand.
     """
+    if not sort:
+        return (f"{pair[0].__repr__()}{pair[1].__repr__()}")
     pair.sort(key=lambda x: x.get_real_value(), reverse=True)
     pair.sort(key=lambda x: x.get_suit())
     string_pair = f"{pair[0].__repr__()}{pair[1].__repr__()}"

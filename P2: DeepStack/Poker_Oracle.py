@@ -1,6 +1,8 @@
 import copy
 import numpy as np
 import json
+import csv
+import pandas as pd
 import Util.Player
 import Util.Oracle_Util as oracle_util
 import Util.Game_Util as game_util
@@ -95,10 +97,15 @@ def generate_utility_matrix(save: bool=False, cache: bool=True):
         dict: The utility matrix.
     """
     if cache:
-        return load_utility_matrix_from_json()
+        um = load_utility_matrix_from_csv()
+        if save:
+            save_utility_matrix_to_csv(um)
+            save_utility_matrix_to_json(um)
+        return um
     utility_matrix = {}
     hole_pairs = state_util.possible_hole_pairs()
     for i, pair1 in enumerate(hole_pairs):
+        print(f"Generating utility matrix for hand {i + 1} of {len(hole_pairs)}")
         utility_matrix[oracle_util.represent_hand_as_string(pair1)] = {}
         for j, pair2 in enumerate(hole_pairs):
             if i != j:
@@ -112,6 +119,7 @@ def generate_utility_matrix(save: bool=False, cache: bool=True):
                 utility_matrix[oracle_util.represent_hand_as_string(pair1)][oracle_util.represent_hand_as_string(pair2)] = 0
     if save:
         save_utility_matrix_to_json(utility_matrix)
+        save_utility_matrix_to_csv(utility_matrix)
     return utility_matrix
 
 def display_utility_matrix():
@@ -164,3 +172,22 @@ def load_utility_matrix_from_json():
     with open("utility_matrix.json", 'r') as file:
         return json.load(file)
 
+def save_utility_matrix_to_csv(data):
+    # First, flatten the data if it's nested
+    flat_data = oracle_util.flatten_dict(data)
+    
+    # Determine the CSV fieldnames from the first item keys
+    fieldnames = flat_data[0].keys()
+    
+    with open("utility_matrix.csv", 'w', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        # Writing headers
+        writer.writeheader()
+        
+        # Writing data rows
+        for row in flat_data:
+            writer.writerow(row)
+
+def load_utility_matrix_from_csv():
+    return pd.read_csv('utility_matrix.csv')

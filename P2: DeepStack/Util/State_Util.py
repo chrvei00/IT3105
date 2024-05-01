@@ -80,10 +80,11 @@ def gen_state(state: Node.State, object: object) -> Node.State:
         card = object
         table_copy = copy.deepcopy(state.table)
         table_copy.append(card)
-        if len(table_copy) < 5:
-            return Node.State("decision", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+        if len(table_copy) == 3 or len(table_copy) == 4 or len(table_copy) == 5:
+            state_type = "decision"
         else:
-            return Node.State("terminal", state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
+            state_type = "chance"
+        return Node.State(state_type, state.bets, state.blind, state.player_stacks, table_copy, state.to_act, state.has_raised, state.has_called)
 
 def possible_actions(node: Node.Node) -> list:
     """
@@ -106,7 +107,7 @@ def possible_actions(node: Node.Node) -> list:
         actions.append("bet")
     return actions
 
-def possible_cards(state: Node.State, max: int) -> list:
+def possible_cards(state: Node.State, max: int = config.read_chance_cards()) -> list:
     """
     Get all possible cards for the current state.
 
@@ -120,7 +121,11 @@ def possible_cards(state: Node.State, max: int) -> list:
     deck = Card.Deck()
     deck.shuffle()
     cards = deck._deal(max)
-    return [card for card in cards if card not in state.table]
+    possible_cards = []
+    for card in cards:
+        if not any([card.get_real_value() == table_card.get_real_value() and card.get_suit() == table_card.get_suit() for table_card in state.table]):
+            possible_cards.append(card)
+    return possible_cards
 
 def possible_hole_pairs(state: Node.State=None, max: int=52) -> list:
     """
@@ -154,9 +159,9 @@ def gen_hole_pair_matrix(init_value: float = 0) -> dict:
     actions = config.get_actions()
     matrix = {}
     for pair in possible_hole_pairs():
-        matrix[config.format_hole_pair(pair)] = {}
+        matrix[config.format_hole_pair(pair, sort=False)] = {}
         for action in actions:
-            matrix[config.format_hole_pair(pair)][action] = init_value
+            matrix[config.format_hole_pair(pair, sort=False)][action] = init_value
     return matrix
 
 def gen_range() -> dict:
@@ -169,5 +174,5 @@ def gen_range() -> dict:
     matrix = {}
     num_hole_pairs = len(possible_hole_pairs())
     for pair in possible_hole_pairs():
-        matrix[config.format_hole_pair(pair)] = 1/num_hole_pairs
+        matrix[config.format_hole_pair(pair, sort=False)] = 1/num_hole_pairs
     return matrix
