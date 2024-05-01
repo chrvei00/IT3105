@@ -6,6 +6,15 @@ import Poker_Oracle as oracle
 import inquirer
 
 def play(auto):
+    """
+    Play a game of poker.
+
+    Parameters:
+    - auto (bool): Indicates whether the game should be played automatically or with user input.
+
+    Returns:
+    None
+    """
     if auto:
         Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, start_chips = 2, 0, 0, 1000
     else:

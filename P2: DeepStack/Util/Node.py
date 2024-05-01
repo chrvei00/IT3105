@@ -1,4 +1,21 @@
 class Node:
+    """
+    Represents a node in a tree structure.
+
+    Attributes:
+        state (object): The state associated with the node.
+        parent (object): The parent node of the current node.
+        action (str): The action taken to reach the current node.
+        player_range (dict): The range of the player at the current node.
+        opponent_range (dict): The range of the opponent at the current node.
+        depth (int): The depth of the node in the tree.
+        regret_sum (dict): The sum of regrets for each action at the current node.
+        strategy_sum (dict): The sum of strategies for each action at the current node.
+        player_value (dict): The value of the player at the current node.
+        opponent_value (dict): The value of the opponent at the current node.
+        children (list): The list of child nodes of the current node.
+    """
+
     def __init__(self, state: object, parent: object = None, action: str = None, player_range: dict = None, opponent_range: dict = None, depth: int = 0, regret_sum: dict = None, strategy_sum: dict = None, player_value: dict = None, opponent_value: dict = None):
         self.state = state
         self.parent = parent
@@ -13,9 +30,15 @@ class Node:
         self.opponent_value = opponent_value
     
     def add_child(self, child: object):
+        """
+        Adds a child node to the current node.
+
+        Args:
+            child (object): The child node to be added.
+        """
         self.children.append(child)
         child.depth = self.depth + 1
-        child.parent = self        
+        child.parent = self
 
 class State:
     def __init__(self, state_type: str, bets: dict, blind: int, player_stacks: dict, table: list, to_act: str, has_raised: dict = None, has_called: dict = None):
