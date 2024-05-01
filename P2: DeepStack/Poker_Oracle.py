@@ -83,7 +83,7 @@ def simulate_table(init_deck, init_table: list, player_hand: list, opponent: lis
             table.append(card)
     return game_util.compare_two_hands(player_hand, opponent, table)
 
-def generate_utility_matrix(save: bool=True, cache: bool=False):
+def generate_utility_matrix(save: bool=False, cache: bool=True):
     """
     Generate the utility matrix.
     
