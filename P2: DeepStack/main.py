@@ -2,6 +2,7 @@ import Game_Manager as Game_Manager
 import Util.gui as gui
 import Util.Config as config
 import Util.N_Util as n_util
+import Poker_Oracle as oracle
 import inquirer
 
 def play(auto):
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     questions = [
         inquirer.List('action',
                       message="What do you want to do?",
-                      choices=['play', 'train'],
+                      choices=['play', 'train', 'display UM'],
                   ),
     ]
     answers = inquirer.prompt(questions)
@@ -27,6 +28,8 @@ if __name__ == '__main__':
         exit()
     if answers.get('action') == 'train':
         n_util.train()
+    elif answers.get('action') == 'display UM':
+        oracle.display_utility_matrix()
     else:
         auto = config.read_setup()
         play(auto)

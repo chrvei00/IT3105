@@ -21,3 +21,9 @@ def simulate(deck: object, table: list, player: object, opponents: list) -> bool
         opponent.cards = []
     # Return the winner == player
     return winners.__contains__(player)
+
+def represent_hand_as_string(hand: list) -> str:
+    """
+    Represent a hand as a string.
+    """
+    return f"{hand[0].__repr__()}, {hand[1].__repr__()}"

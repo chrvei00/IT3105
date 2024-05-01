@@ -1,10 +1,11 @@
 import random
+import Util.Config as config
 
 class Card:
     def __init__(self, suit: str, value: int):
         if suit not in ["Hearts", "Diamonds", "Clubs", "Spades"]:
             raise ValueError("Invalid suit")
-        if int(value) not in [2, 3, 4, 5]:
+        if int(value) not in config.get_cards():
             raise ValueError("Invalid value", value)
         self.suit = suit
         self.value = value
@@ -40,12 +41,12 @@ class Card:
         return self.represent_suit(self.suit)
 
     def get_all_cards():
-        return [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2, 3, 4, 5]]
+        return [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in config.get_cards()]
 
 
 class Deck:
     def __init__(self):
-        self.cards = [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in [2, 3, 4]]
+        self.cards = [Card(suit, value) for suit in ["Hearts", "Diamonds", "Clubs", "Spades"] for value in config.get_cards()]
 
     def __repr__(self):
         return f"Deck of {self.count()} cards"

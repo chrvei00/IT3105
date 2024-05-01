@@ -66,6 +66,12 @@ def read_nn_evalution() -> bool:
     config.read('config.ini')
     return config.getboolean('setup', 'nn_evaluation')
 
+def get_cards() -> list:
+    """
+    Return a list of all possible cards.
+    """
+    return [2, 3, 4, 5, 6, 7, 8, 9]
+
 def write_cheat_sheet(hand: list, opponents: int, wins: int, n: int) -> None:
     """
     Write the win rate of a hand to the cheat sheet.

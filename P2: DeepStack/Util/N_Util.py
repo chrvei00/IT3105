@@ -14,6 +14,11 @@ def input_shape() -> tuple[int]:
     pot_dimension = len([generate_relative_pot_size()])
     return (public_cards_dimension + pot_dimension + player_range_dimension + opponent_range_dimension,)
 
+def output_shape() -> tuple[int]:
+    player_range_dimension = len(state_util.gen_range())
+    opponent_range_dimension = len(state_util.gen_range())
+    return (player_range_dimension + opponent_range_dimension,)
+
 def simulate_data(num_samples):
     train_features = []
     train_targets = []
@@ -84,7 +89,7 @@ def train():
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(128, activation='relu', input_shape=input_shape()),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(240)  # output layer with 2 neurons for the two value vectors
+        tf.keras.layers.Dense(output_shape()[0])
     ])
 
     model.compile(optimizer=tf.keras.optimizers.Adam(), loss='mean_squared_error')

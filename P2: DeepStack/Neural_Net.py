@@ -6,7 +6,7 @@ import Util.Card as Card
 
 class Neural_Net:
     def __init__(self):
-        self.model = tf.keras.models.load_model('nn/model_(251,)_100_2024-05-01, 10:01.h5')
+        self.model = tf.keras.models.load_model('nn/model_(1003,)_100_2024-05-01, 17:55.h5')
         self.model.compile()
     
     def evaluate(self, state, player_range, opponent_range):
