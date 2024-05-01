@@ -10,11 +10,9 @@ def create_game_setup_window():
         [sg.Text('Number of human players:'),
             sg.InputText('1', key='-NUM_HUMAN_PLAYERS-', size=(5, 1))],
         [sg.Text('Number of AI Rollout players:'),
-            sg.InputText('1', key='-NUM_AI_Rollout_PLAYERS-', size=(5, 1))],
+            sg.InputText('0', key='-NUM_AI_Rollout_PLAYERS-', size=(5, 1))],
         [sg.Text('Number of AI Resolver players:'),
-            sg.InputText('0', key='-NUM_AI_Resolver_PLAYERS-', size=(5, 1))],
-        [sg.Text('Game type:'),
-            sg.InputText('simple', key='-GAME_TYPE-', size=(10, 1))],
+            sg.InputText('1', key='-NUM_AI_Resolver_PLAYERS-', size=(5, 1))],
         [sg.Text('Starting chips:'),
             sg.InputText('1000', key='-START_CHIPS-', size=(5, 1))],
         [sg.Submit()]
@@ -24,7 +22,7 @@ def create_game_setup_window():
         if event == sg.WIN_CLOSED:
             break
         if event == 'Submit':
-            return int(values['-NUM_HUMAN_PLAYERS-']), int(values['-NUM_AI_Rollout_PLAYERS-']), int(values['-NUM_AI_Resolver_PLAYERS-']), values['-GAME_TYPE-'], int(values['-START_CHIPS-'])
+            return int(values['-NUM_HUMAN_PLAYERS-']), int(values['-NUM_AI_Rollout_PLAYERS-']), int(values['-NUM_AI_Resolver_PLAYERS-']), int(values['-START_CHIPS-'])
     raise ValueError("Window closed before submitting")
 
 def create_poker_window(num_players: int = 2):

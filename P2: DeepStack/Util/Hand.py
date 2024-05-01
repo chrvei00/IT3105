@@ -135,7 +135,16 @@ class Hand:
             allowed_actions = player.get_possible_actions(self.high_bet, self.blind)
             action = player.get_action(self.window, self.high_bet, self.pot, self.table, self.active_players(), self.blind)
             if action not in allowed_actions:
-                raise ValueError(f"Action {action} not allowed for player {player.name}")
+                if "call" in allowed_actions:
+                    gui.custom_popup(f"Action {action} not allowed for player {player.name}. You have been forced to call.")
+                    action = "call"
+                    if player.type == "AI_resolve" and player.resolver:
+                        player.resolver.root = None
+                else:
+                    gui.custom_popup(f"Action {action} not allowed for player {player.name}. You have been forced to fold.")
+                    action = "fold"
+                    if player.type == "AI_resolve" and player.resolver:
+                        player.resolver.root = None
             if action == "fold":
                 self.fold(player)
             elif action == "call":
@@ -162,7 +171,7 @@ class Hand:
     def reward(self, winners: list, amount: int=None):
         if amount is not None:
             for player in winners:
-                player.reward(amount)
+                player.reward(amount/len(winners))
         else:
             for player in winners:
                 player.reward(self.pot / len(winners))

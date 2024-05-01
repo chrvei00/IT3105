@@ -21,12 +21,12 @@ class Resolver:
                 if child.action == action:
                     self.root = child
                     update_depth(self.root)
-                    print("Root node updated after action: ", action)
                     if self.root.state.type == "terminal" or self.root.state.type == "chance":
                         self.root = None
                     else:
                         visualize_tree(self.root)
                         branch_tree(self.root)
+                        print("Root node updated after action: ", action)
                     return action
                 self.root = None
         return action

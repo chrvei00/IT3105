@@ -4,9 +4,9 @@ import Util.Game_Util as util
 import Util.gui as gui
 
 class Game:
-    def __init__(self, window, Num_Human_Players: int, Num_AI_Rollout_Players: int, Num_AI_Resolve_Players: int, Game_Type: str = "simple", start_chips: int = 1000):
-        util.validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type)
-        self.players, self.dealer, self.deck, self.blind = util.setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type, start_chips)
+    def __init__(self, window, Num_Human_Players: int, Num_AI_Rollout_Players: int, Num_AI_Resolve_Players: int, start_chips: int = 1000):
+        util.validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players)
+        self.players, self.dealer, self.deck, self.blind = util.setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, start_chips)
         self.window = window
 
     def __repr__(self):

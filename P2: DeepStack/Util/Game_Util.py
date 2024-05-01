@@ -8,7 +8,7 @@ import Util.Config as config
 import Util.State_Util as state_util
 import Poker_Oracle as oracle
 
-def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players, Game_Type):
+def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players):
     if Num_Human_Players < 0 or Num_AI_Rollout_Players < 0 or Num_AI_Resolve_Players < 0:
         raise ValueError("Number of players must be a non-negative integer")
     elif Num_Human_Players + Num_AI_Rollout_Players + Num_AI_Resolve_Players < 2:
@@ -17,8 +17,6 @@ def validate_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Play
         raise ValueError("There can be at most 10 players")
     if Num_AI_Resolve_Players > 0 and Num_Human_Players + Num_AI_Resolve_Players + Num_AI_Rollout_Players > 2:
         raise ValueError("There can be at most 2 players in a game with AI resolvers")
-    elif Game_Type not in ["simple", "complex"]:
-        raise ValueError("Game type must be either simple or complex")
 
 def validate_hand(players: list, dealer: Player, deck: Card.Deck, blind: int):
     if len(players) < 2:
@@ -32,7 +30,7 @@ def validate_hand(players: list, dealer: Player, deck: Card.Deck, blind: int):
     elif deck is None:
         raise ValueError("Deck cannot be None")
 
-def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players: int, Game_Type: str, start_chips):
+def setup_game(Num_Human_Players, Num_AI_Rollout_Players, Num_AI_Resolve_Players: int, start_chips):
     players = []
     # Create human players
     for i in range(Num_Human_Players):

@@ -90,10 +90,10 @@ def train():
     model.compile(optimizer=tf.keras.optimizers.Adam(), loss='mean_squared_error')
     model.summary()
     # Assume `train_features` and `train_targets` are prepared according to your data generation step
-    num_samples = 10
+    num_samples = 100
     train_features, train_targets = simulate_data(num_samples)
-    model.fit(train_features, train_targets, epochs=10, batch_size=32)
+    model.fit(train_features, train_targets, epochs=100, batch_size=32)
 
     # Save the trained model with num_samples and date in the filename
     date = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M")
-    model.save(f'nn/model_{input_shape}_{num_samples}_{date}.h5')
+    model.save(f'nn/model_{input_shape()}_{num_samples}_{date}.h5')
