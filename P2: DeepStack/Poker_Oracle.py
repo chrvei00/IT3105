@@ -17,33 +17,37 @@ def cheat_sheet() -> dict:
 def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: object = None, cache: bool=True, save: bool=True) -> float:
     """
     Perform a hole card rollout and return the utility matrix.
+    
+    Args:
+        init_table (list): The initial table cards.
+        hand (list): The player's hole cards.
+        opponents (int): The number of opponents.
+        init_deck (object, optional): The initial deck of cards. Defaults to None.
+        cache (bool, optional): Whether to use the cheat sheet cache. Defaults to True.
+        save (bool, optional): Whether to save the results to the cheat sheet. Defaults to True.
+    
+    Returns:
+        float: The utility matrix.
     """
-    # Check if rollout already performed
     if cache:
         wp = config.read_cheat_sheet().get(config.format_hand(hand))
         if wp is not None:
             return wp
     n = config.read_simultation_size()
-    # Create a deck
     if init_deck is None:
         init_deck = Card.Deck()
         for card in hand + init_table:
             if card in init_deck.cards:
                 init_deck.cards.remove(card)
-    # Create players and opponents
     player = Util.Player.Player("Player", None)
     player.cards = hand
     opponents = [Util.Player.Player(f"Opponent {i}", None) for i in range(opponents)]
-    # Simulate n times
     wins = 0;
     for _ in range(n):
-        # Create a copy of the table and deck
         table = copy.deepcopy(init_table)
         deck = copy.deepcopy(init_deck)
-        # Simulate the showdown
         if oracle_util.simulate(deck, table, player, opponents):
             wins += 1
-    # Return the utility matrix
     if save:
         config.write_cheat_sheet(hand, opponents, wins, n)
     return wins / n
@@ -51,8 +55,16 @@ def hole_card_rollout(init_table: list, hand: list, opponents: int, init_deck: o
 def simulate_table(init_deck, init_table: list, player_hand: list, opponent: list) -> float:
     """
     Simulate a table with a player and an opponent.
+    
+    Args:
+        init_deck (object): The initial deck of cards.
+        init_table (list): The initial table cards.
+        player_hand (list): The player's hole cards.
+        opponent (list): The opponent's hole cards.
+    
+    Returns:
+        float: The utility matrix.
     """
-    # Create a copy of the table and deck
     table = copy.deepcopy(init_table)
     deck = copy.deepcopy(init_deck)
     if init_deck is None:
@@ -60,7 +72,6 @@ def simulate_table(init_deck, init_table: list, player_hand: list, opponent: lis
         for card in player_hand + opponent + table:
             if card in deck.cards:
                 deck.cards.remove(card)
-    # Simulate the showdown
     deck.shuffle()
     if len(opponent) < 2:
         cards = deck.deal_card(2 - len(opponent))
@@ -73,6 +84,16 @@ def simulate_table(init_deck, init_table: list, player_hand: list, opponent: lis
     return game_util.compare_two_hands(player_hand, opponent, table)
 
 def generate_utility_matrix(save: bool=True, cache: bool=False):
+    """
+    Generate the utility matrix.
+    
+    Args:
+        save (bool, optional): Whether to save the utility matrix to a JSON file. Defaults to True.
+        cache (bool, optional): Whether to use the utility matrix cache. Defaults to False.
+    
+    Returns:
+        dict: The utility matrix.
+    """
     if cache:
         return load_utility_matrix_from_json()
     utility_matrix = {}
@@ -84,7 +105,6 @@ def generate_utility_matrix(save: bool=True, cache: bool=False):
                 if any(card1.get_real_value() == card2.get_real_value() and card1.get_suit() == card2.get_suit() for card1 in pair1 for card2 in pair2):
                     utility_matrix[oracle_util.represent_hand_as_string(pair1)][oracle_util.represent_hand_as_string(pair2)] = 0
                 else:
-                    
                     win_probability = get_win_probability(None, [], pair1, pair2)
                     utility = 2 * (win_probability - 0.5)
                     utility_matrix[oracle_util.represent_hand_as_string(pair1)][oracle_util.represent_hand_as_string(pair2)] = utility
@@ -108,6 +128,15 @@ def display_utility_matrix():
 def get_win_probability(deck, table, hand1, hand2):
     """
     Get the win probability of a hand against another hand.
+    
+    Args:
+        deck (object): The deck of cards.
+        table (list): The table cards.
+        hand1 (list): The first hand.
+        hand2 (list): The second hand.
+    
+    Returns:
+        float: The win probability.
     """
     wins = 0
     simulation_size = config.read_simultation_size()
@@ -116,10 +145,22 @@ def get_win_probability(deck, table, hand1, hand2):
     return wins / simulation_size
 
 def save_utility_matrix_to_json(utility_matrix):
+    """
+    Save the utility matrix to a JSON file.
+    
+    Args:
+        utility_matrix (dict): The utility matrix.
+    """
     with open("utility_matrix.json", 'w') as file:
         json.dump(utility_matrix, file, indent=4)
 
 def load_utility_matrix_from_json():
+    """
+    Load the utility matrix from a JSON file.
+    
+    Returns:
+        dict: The utility matrix.
+    """
     with open("utility_matrix.json", 'r') as file:
         return json.load(file)
 

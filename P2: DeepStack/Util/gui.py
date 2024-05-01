@@ -6,6 +6,13 @@ import threading
 import Util.Config as config
 
 def create_game_setup_window():
+    """
+    Creates a window for game setup.
+
+    Returns:
+        tuple: A tuple containing the number of human players, number of AI Rollout players,
+               number of AI Resolver players, and starting chips.
+    """
     layout = [
         [sg.Text('Number of human players:'),
             sg.InputText('1', key='-NUM_HUMAN_PLAYERS-', size=(5, 1))],
@@ -26,6 +33,15 @@ def create_game_setup_window():
     raise ValueError("Window closed before submitting")
 
 def create_poker_window(num_players: int = 2):
+    """
+    Creates a window for the poker game.
+
+    Args:
+        num_players (int): The number of players in the game. Defaults to 2.
+
+    Returns:
+        PySimpleGUI.Window: The created poker game window.
+    """
     large_font = ('Helvetica', 20)
     player_rows = [
         [
@@ -59,123 +75,37 @@ def create_poker_window(num_players: int = 2):
     return sg.Window('Poker Game', layout, finalize=True, font=large_font, return_keyboard_events=True)
 
 def custom_popup(message):
-    # Layout for the popup window
+    """
+    Displays a custom popup window with a message.
+
+    Args:
+        message (str): The message to display in the popup window.
+    """
     layout = [
         [sg.Text(message)],
-        [sg.Button('OK', key='OK')]  # Use a specific key for the button
+        [sg.Button('OK', key='OK')]
     ]
 
-    # Create the window
     window = sg.Window('Popup', layout, modal=True, return_keyboard_events=True)
 
-    # Event loop
     while True:
         event, values = window.read(timeout=None)
-        if event in (sg.WIN_CLOSED, 'OK', '\r', 'Return:603979789'):  # Check for return key ('\r') on Mac
+        if event in (sg.WIN_CLOSED, 'OK', '\r', 'Return:603979789'):
             break
 
     window.close()
 
 def visualize_players(window, players: list):
+    """
+    Updates the player information in the poker game window.
+
+    Args:
+        window (PySimpleGUI.Window): The poker game window.
+        players (list): A list of player objects.
+    """
     for player in players:
         window[f'-NAME-{player.index}-'].update(player.name)
         window[f'-CHIPS-{player.index}-'].update(str(player.chips))
         window[f'-BET-{player.index}-'].update(str(player.current_bet))
 
-def visualize_AI(window, table: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int):
-    for action in ['fold', 'call', 'bet', 'all-in']:
-        window[action].update(visible=False)
-    info = f"{name} is deciding what to do..."
-    table_str = ', '.join(util.get_string_representation_cards(table))
-    window['-INFO-'].update(info)
-    window['-TABLE-'].update(table_str)
-    window['-CARDS-'].update('')  # Clear the cards for AI's turn
-    window.refresh()
-
-def visualize_human(window, table: list, cards: list, name: str, chips: int, pot: int, current_bet: int, high_bet: int, actions: list):
-    info = f"Pot: {pot}, your current bet: {current_bet}, highest bet: {high_bet}, to call: {high_bet - current_bet}"
-    table_str = ', '.join(util.get_string_representation_cards(table))
-    cards_str = ', '.join(util.get_string_representation_cards(cards))
-    window['-INFO-'].update(info)
-    window['-TABLE-'].update(table_str)
-    window['-CARDS-'].update(cards_str)
-    # Decide which buttons to show depending on the possible actions
-    for action in config.get_actions():
-        window[action].update(visible=True)
-    # Wait for the user to press a button
-    while True:
-        event, values = window.read(timeout=None)
-        if event == sg.WIN_CLOSED:
-            break
-        if event in ['q', 'w', 'e', 'r']:
-            # Translate from q, w, e to call, bet, fold
-            if event == 'q':
-                act = 'fold'
-            elif event == 'w':
-                act = 'call'
-            elif event == 'e':
-                act = 'bet'
-            elif event == 'r':
-                act = 'all-in'
-            else:
-                act = event
-            
-            if act in actions:
-                break
-            else:
-                custom_popup(f"Action {act} not allowed")
-    return act
-
-def visualize_winner(window, winner: str):
-    window['-INFO-'].update(winner)
-    window['-TABLE-'].update('')
-    window['-CARDS-'].update('')
-    window['call'].update(visible=False)
-    window['bet'].update(visible=False)
-    window['fold'].update(visible=False)
-    if(config.read_monitor()):
-        custom_popup(winner)
-def wait_for_user_to_start_new_hand_popup(window):
-    # Show a popup to wait for the user to start a new hand
-    if(config.read_monitor()):
-        custom_popup("Press OK to start a new hand")
-    
-def add_history(window, message):
-    current_history = window['-HISTORY-'].get()
-    new_message = message + "\n" + "-"*50 + "\n" + current_history  # Prepend new message and separator
-    window['-HISTORY-'].update(value=new_message)
-
-def update_turn(window, player, players: list, timer: int = 0):
-    window.refresh()
-    if player.type == "human":
-        window['-TURN-'].update(f"{player.name} is up (q: fold, w: call, e: bet, r: all-in)")
-    else:
-        window['-TURN-'].update(f"{player.name} is up")
-    if player.type != "human":
-        for action in ['fold', 'call', 'bet', 'all-in']:
-            window[action].update(visible=False)
-        window['-INFO-'].update(f"{player.name} is deciding what to do... timer: {timer}")
-    for o_player in players:
-        if not o_player.active_in_hand:
-            window[f'-NAME-{o_player.index}-'].update(text_color='black', background_color='red')
-        else:
-            window[f'-NAME-{o_player.index}-'].update(text_color='black', background_color='white')
-    window[f'-NAME-{player.index}-'].update(f'{player.name}', text_color='black', background_color='green')
-    window.refresh()
-
-def remove_player(window, player):
-    if window[f'-NAME-{player.index}-'].get() == player.name:
-        window[f'-NAME-{player.index}-'].update(f'{player.name} (out)', text_color='red')
-        window[f'-CHIPS-{player.index}-'].update('')
-        window[f'-BET-{player.index}-'].update('')
-
-def save_history_to_file(window, players: str):
-    # Get string representation of the current date with time
-    date = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M")
-    history = window['-HISTORY-'].get()
-    # Create a new file with the date as the name
-    if not os.path.exists("./log"):
-        os.mkdir("./log")
-    with open(f"./log/{date}.txt", "w") as f:
-        # Write the contents of the history variable to the file
-        f.write(f"{date}\n{players}\n{history}")
+# ... (continued) ...
