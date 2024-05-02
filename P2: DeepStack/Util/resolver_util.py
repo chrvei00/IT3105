@@ -50,7 +50,7 @@ def expected_payoff(payoff, node, action):
         return payoff * bet_amount
     elif action == "all-in":
         all_in_amount = player_stack
-        return payoff * all_in_amount
+        return payoff * all_in_amount - potential_loss
     else:
         return 0
 
